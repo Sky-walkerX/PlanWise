@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum SuggestionType {
+  ADD
+  SKIP
+  RESCHEDULE
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String // hashed password
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  todos          Todo[]
+  suggestions    Suggestion[]
+  xp             Int          @default(0)
+  level          Int          @default(1)
+  streak         Int          @default(0)
+  lastActiveDate DateTime?
+}
+
+model Todo {
+  id            String    @id @default(uuid())
+  title         String
+  description   String?
+  isCompleted   Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  dueDate       DateTime?
+  completedAt   DateTime?
+  priority      Priority  @default(MEDIUM)
+  isAiSuggested Boolean   @default(false)
+
+  estimatedTime Int? // Estimated time in minutes (e.g. 25)
+  timeSpent     Int? // Total actual time spent in minutes (updated on timer stop)
+  timerSessions TimerSession[] // Log of timer sessions
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+}
+
+model Suggestion {
+  id             String         @id @default(uuid())
+  suggestionType SuggestionType
+  content        String // AI message (e.g., "Reschedule Task X to tomorrow")
+  createdAt      DateTime       @default(now())
+  forDate        DateTime // The day it was suggested for
+  isAccepted     Boolean        @default(false)
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+}
+
+model TimerSession {
+  id        String    @id @default(uuid())
+  startedAt DateTime
+  endedAt   DateTime?
+  duration  Int? // in minutes
+
+  todo   Todo   @relation(fields: [todoId], references: [id])
+  todoId String
+}
