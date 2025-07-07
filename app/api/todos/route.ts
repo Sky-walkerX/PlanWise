@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
+// Schema to validate incoming todo data
 const TodoSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -11,16 +12,17 @@ const TodoSchema = z.object({
   estimatedTime: z.number().int().positive().optional(),
 });
 
+// GET all todos for the logged-in user
 export async function GET(request: NextRequest) {
-  const token = await getToken({ req: request });
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
-  if (!token?.id) {
+  if (!token?.sub) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const todos = await prisma.todo.findMany({
     where: {
-      userId: token.id as string,
+      userId: token.sub as string,
     },
     orderBy: {
       createdAt: "desc",
@@ -30,27 +32,28 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(todos);
 }
 
+// POST a new todo for the logged-in user
 export async function POST(request: NextRequest) {
-  const token = await getToken({ req: request });
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
-  if (!token?.id) {
+  if (!token?.sub) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const body = await request.json();
-  const parsedBody = TodoSchema.safeParse(body);
+  const parsed = TodoSchema.safeParse(body);
 
-  if (!parsedBody.success) {
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid data", issues: parsedBody.error.issues },
+      { error: "Invalid data", issues: parsed.error.issues },
       { status: 400 }
     );
   }
 
   const todo = await prisma.todo.create({
     data: {
-      ...parsedBody.data,
-      userId: token.id as string,
+      ...parsed.data,
+      userId: token.sub as string,
     },
   });
 
