@@ -5,7 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs"; // For password comparison
 
 // Import PrismaClient from your generated client
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@/app/generated/prisma";
 const prisma = new PrismaClient(); // Instantiate Prisma Client
 
 export const authOptions: NextAuthOptions = {

@@ -112,11 +112,43 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* @theme {
+    --primarybg: #FAF7F2;
+    --secondarybg: #F0D1A8;
+    --mutedbg: #C4A49F;
+    --accent1bg: #F87777;
+    --accent2bg: #1E293B;
+
+    --primarybgdark: #0f172a; 
+    --secondarybgdark: #1e293b; 
+    --mutedbgdark: #64748b; 
+    --accent1bgdark: #ef4444; 
+    --accent2bgdark: #f1f5f9;
+} */
+
+/* globals.css */
+@layer base {
+  :root {
+    --primarybg: #FAF7F2;
+    --secondarybg: #F0D1A8;
+    --mutedbg: #C4A49F;
+    --accent1bg: #F87777;
+    --accent2bg: #1E293B;
+  }
+
+  .dark {
+    --primarybg: #0f172a;
+    --secondarybg: #1e293b;
+    --mutedbg: #64748b;
+    --accent1bg: #ef4444;
+    --accent2bg: #f1f5f9;
+  }
+}
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+  
 }

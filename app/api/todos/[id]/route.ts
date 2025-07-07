@@ -13,7 +13,10 @@ const UpdateSchema = z.object({
   timeSpent: z.number().int().nonnegative().optional(),
 });
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const token = await getToken({ req });
   if (!token?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -23,9 +26,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const resolvedParams = await params;
+
   const todo = await prisma.todo.updateMany({
     where: {
-      id: params.id,
+      id: resolvedParams.id,
       userId: token.id,
     },
     data: {
@@ -37,13 +42,17 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json(todo);
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const token = await getToken({ req });
   if (!token?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const resolvedParams = await params;
   const deleted = await prisma.todo.deleteMany({
     where: {
-      id: params.id,
+      id: resolvedParams.id,
       userId: token.id,
     },
   });

@@ -1,9 +1,7 @@
 // app/api/register/route.ts
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient(); // Instantiate Prisma Client
+import prisma from "@/lib/prisma"; // Adjust the import path as necessary
 
 export async function POST(request: Request) {
   try {

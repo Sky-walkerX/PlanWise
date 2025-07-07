@@ -181,7 +181,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/home/skywalker/Coding/WebDev/Projects/todo/app/generated/prisma",
+      "value": "/home/skywalker/Coding/WebDev/Projects/PlanWise/PlanWise/app/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -195,12 +195,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/home/skywalker/Coding/WebDev/Projects/todo/prisma/schema.prisma",
+    "sourceFilePath": "/home/skywalker/Coding/WebDev/Projects/PlanWise/PlanWise/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../../prisma",
   "clientVersion": "6.11.1",
