@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
+// Define the Zod schema for validating todo input
 const TodoSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -11,37 +12,30 @@ const TodoSchema = z.object({
   estimatedTime: z.number().int().positive().optional(),
 });
 
+// GET /api/todos - Get all todos for the authenticated user
 export async function GET(request: NextRequest) {
   console.log("\n--- [GET /api/todos] Handler Triggered ---");
 
   try {
-    // Log 1: Check if the cookie is being sent from the browser
     console.log("Incoming request headers:", request.headers);
-
-    // Log 2: Check what the serverless function sees for the secret variables
-    // THIS IS THE MOST IMPORTANT LOG. ONE OF THESE IS LIKELY UNDEFINED.
     console.log("Value of process.env.AUTH_SECRET:", process.env.AUTH_SECRET);
-    console.log("Value of process.env.NEXTAUTH_SECRET:", process.env.NEXTAUTH_SECRET);
-    
-    // The getToken function will use one of the secrets above to decrypt the cookie
-    const token = await getToken({ 
+
+    const token = await getToken({
       req: request,
-      // You can explicitly tell it which secret to use for a definitive test
-      // secret: process.env.NEXTAUTH_SECRET 
+      secret: process.env.AUTH_SECRET,
     });
 
-    // Log 3: Check what `getToken` returns. Is it a valid token or null?
     console.log("Token object returned by getToken:", token);
 
-    if (!token?.id) {
-      console.error("Validation failed: Token is null or does not contain an ID. Responding with 401.");
+    if (!token?.sub) {
+      console.error("Validation failed: Token is null or missing `sub`. Responding with 401.");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log(`Validation successful. Fetching todos for user ID: ${token.id}`);
+    console.log(`Validation successful. Fetching todos for user ID: ${token.sub}`);
     const todos = await prisma.todo.findMany({
       where: {
-        userId: token.id as string,
+        userId: token.sub,
       },
       orderBy: {
         createdAt: "desc",
@@ -49,30 +43,44 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(todos);
-
   } catch (error) {
     console.error("An unexpected error occurred in /api/todos:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
-// You can add similar logging to your POST function if needed
+// POST /api/todos - Create a new todo for the authenticated user
 export async function POST(request: NextRequest) {
-  // ... similar logging here ...
-  const token = await getToken({ req: request });
-  if (!token?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const token = await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET,
+    });
+
+    if (!token?.sub) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const parsedBody = TodoSchema.safeParse(body);
+
+    if (!parsedBody.success) {
+      return NextResponse.json({
+        error: "Invalid data",
+        issues: parsedBody.error.issues,
+      }, { status: 400 });
+    }
+
+    const todo = await prisma.todo.create({
+      data: {
+        ...parsedBody.data,
+        userId: token.sub,
+      },
+    });
+
+    return NextResponse.json(todo, { status: 201 });
+  } catch (error) {
+    console.error("Error creating todo:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-  const body = await request.json();
-  const parsedBody = TodoSchema.safeParse(body);
-  if (!parsedBody.success) {
-    return NextResponse.json({ error: "Invalid data", issues: parsedBody.error.issues }, { status: 400 });
-  }
-  const todo = await prisma.todo.create({
-    data: {
-      ...parsedBody.data,
-      userId: token.id as string,
-    },
-  });
-  return NextResponse.json(todo, { status: 201 });
 }
