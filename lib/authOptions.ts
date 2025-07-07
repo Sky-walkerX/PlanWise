@@ -9,7 +9,7 @@ import { PrismaClient } from "@/app/generated/prisma";
 const prisma = new PrismaClient(); // Instantiate Prisma Client
 
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET,
   session: {
     strategy: "jwt", // Use JWT strategy for stateless sessions
   },
