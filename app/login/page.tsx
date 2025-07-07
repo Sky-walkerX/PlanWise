@@ -21,23 +21,38 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const loginMutation = useMutation({
+   const loginMutation = useMutation({
     mutationFn: async () => {
       const result = await signIn("credentials", {
         redirect: false,
         email,
         password,
-      })
-      if (result?.error) throw new Error(result.error)
-      return result
+      });
+
+      // --- ADD THIS CONSOLE LOG ---
+      console.log("SIGN-IN RESULT FROM SERVER:", result);
+      // -----------------------------
+
+      if (result?.error) {
+        // The error property will contain the message from your `authorize` function
+        throw new Error(result.error);
+      }
+      if (!result?.ok) {
+        // Handle other non-ok but non-error scenarios if any
+        throw new Error("Login failed. Please check your credentials.");
+      }
+      return result;
     },
-    onSuccess: () => {
-      router.push("/")
+    onSuccess: (data) => {
+      // --- ADD THIS CONSOLE LOG ---
+      console.log("Login successful on client, redirecting...", data);
+      // -----------------------------
+      router.push("/"); // Or ideally to a dashboard page like "/tasks"
     },
     onError: (err: Error) => {
-      setError(err.message)
+      setError(err.message);
     },
-  })
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
