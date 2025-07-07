@@ -4,6 +4,15 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
+interface Task {
+  id: string
+  title: string
+  priority: "LOW" | "MEDIUM" | "HIGH"
+  dueDate?: string
+  estimatedTime?: number // in minutes
+  description?: string
+}
+
 export async function POST(request: NextRequest) {
   try {
     const token = await getToken({ req: request })
@@ -22,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     const formattedTasks = tasks
       .map(
-        (task: any) =>
+        (task: Task) =>
           `- ID: ${task.id}, Title: "${task.title}", Priority: ${task.priority}, Due: ${task.dueDate || "None"}, Estimated Time: ${task.estimatedTime || "Unknown"} min, Description: "${task.description || "None"}"`,
       )
       .join("\n")
