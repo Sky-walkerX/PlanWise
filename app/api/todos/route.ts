@@ -1,61 +1,55 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-import prisma from "@/lib/prisma";
-import { z } from "zod";
+import { type NextRequest, NextResponse } from "next/server"
+import { getToken } from "next-auth/jwt"
+import prisma from "@/lib/prisma"
+import { z } from "zod"
 
-// Schema to validate incoming todo data
 const TodoSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   dueDate: z.string().datetime().optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
   estimatedTime: z.number().int().positive().optional(),
-});
+})
 
-// GET all todos for the logged-in user
 export async function GET(request: NextRequest) {
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getToken({ req: request })
 
-  if (!token?.sub) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!token?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   const todos = await prisma.todo.findMany({
     where: {
-      userId: token.sub as string,
+      userId: token.id as string,
     },
     orderBy: {
       createdAt: "desc",
     },
-  });
+  })
 
-  return NextResponse.json(todos);
+  return NextResponse.json(todos)
 }
 
-// POST a new todo for the logged-in user
 export async function POST(request: NextRequest) {
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getToken({ req: request })
 
-  if (!token?.sub) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!token?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const body = await request.json();
-  const parsed = TodoSchema.safeParse(body);
+  const body = await request.json()
+  const parsedBody = TodoSchema.safeParse(body)
 
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid data", issues: parsed.error.issues },
-      { status: 400 }
-    );
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: "Invalid data", issues: parsedBody.error.issues }, { status: 400 })
   }
 
   const todo = await prisma.todo.create({
     data: {
-      ...parsed.data,
-      userId: token.sub as string,
+      ...parsedBody.data,
+      userId: token.id as string,
     },
-  });
+  })
 
-  return NextResponse.json(todo, { status: 201 });
+  return NextResponse.json(todo, { status: 201 })
 }

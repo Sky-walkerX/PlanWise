@@ -1,13 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { getServerSession } from "next-auth"
+import { getToken } from "next-auth/jwt"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession()
-    if (!session?.user?.email) {
+    const token = await getToken({ req: request })
+    if (!token?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -18,29 +18,26 @@ export async function POST(request: NextRequest) {
     }
 
     const prompt = `
-      You are an expert project manager AI. Your task is to break down a user's goal into small, actionable, and specific sub-tasks.
-      
-      User's Goal: "${taskTitle}"
-      ${taskDescription ? `Additional Context: "${taskDescription}"` : ""}
+    You are an expert project manager AI. Your task is to break down a user's goal into small, actionable, and specific sub-tasks.
+    
+    User's Goal: "${taskTitle}"
+    ${taskDescription ? `Additional Context: "${taskDescription}"` : ""}
 
-      Generate 3 to 5 sub-tasks. Each sub-task should be a clear action that can be completed in one session. Start each with an action verb (e.g., "Research", "Draft", "Design", "Implement", "Schedule").
-      
-      IMPORTANT: Keep each sub-task title under 100 characters.
+    Generate 3 to 5 sub-tasks. Each sub-task should be a clear action that can be completed in one session. Start each with an action verb (e.g., "Research", "Draft", "Design", "Implement", "Schedule").
 
-      Return the result as a JSON object with a single key "subTasks", which is an array of strings. Do not include any other text or markdown formatting.
+    Return the result as a JSON object with a single key "subTasks", which is an array of strings. Do not include any other text or markdown formatting.
 
-      Example:
-      {
-        "subTasks": ["Define campaign target audience", "Draft ad copy variations", "Set up analytics tracking dashboard", "Configure ad campaign budget and schedule"]
-      }
-    `
+    Example:
+    {
+      "subTasks": ["Define campaign target audience", "Draft ad copy variations", "Set up analytics tracking dashboard", "Configure ad campaign budget and schedule"]
+    }
+  `
 
-    // Using a stable, recommended model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" })
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
     const result = await model.generateContent(prompt)
     const text = result.response.text()
 
-    // Robust cleaning logic
+    // Use robust cleaning logic
     let cleanedText = text.trim()
     if (cleanedText.startsWith("```json")) {
       cleanedText = cleanedText.slice(7, -3).trim()
