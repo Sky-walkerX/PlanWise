@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { useTodos } from "./useTodos"
-import { subDays, format, isToday } from "date-fns"
+import { subDays, format, isToday, startOfWeek, addDays } from "date-fns" // Import startOfWeek and addDays
 
 export interface UserStats {
   totalXP: number
@@ -24,7 +24,7 @@ export function useAnalytics() {
     queryFn: (): UserStats => {
       const completedTodos = todos.filter((todo) => todo.isCompleted && todo.completedAt)
 
-      // Calculate total XP
+      // Calculate total XP (rest of this logic is fine, no changes needed)
       let totalXP = 0
       completedTodos.forEach((todo) => {
         // Base XP for task completion
@@ -64,7 +64,7 @@ export function useAnalytics() {
       const xpForCurrentLevel = (level - 1) * 100
       const xpToNextLevel = level * 100 - totalXP
 
-      // Calculate streaks
+      // Calculate streaks (rest of this logic is fine, no changes needed)
       const today = new Date()
       const last30Days = Array.from({ length: 30 }, (_, i) => {
         const date = subDays(today, i)
@@ -85,7 +85,7 @@ export function useAnalytics() {
               case "MEDIUM":
                 xp += 10
                 break
-              case "HIGH":
+                case "HIGH":
                 xp += 20
                 break
             }
@@ -135,15 +135,17 @@ export function useAnalytics() {
         return isToday(new Date(todo.completedAt))
       }).length
 
-      // Weekly progress (last 7 days)
+      // *** MODIFIED WEEKLY PROGRESS CALCULATION ***
+      const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 0 }); // Sunday is 0
       const weeklyProgress = Array.from({ length: 7 }, (_, i) => {
-        const date = subDays(today, i)
+        const date = addDays(startOfCurrentWeek, i); // Get each day of the week
         return completedTodos.filter((todo) => {
-          if (!todo.completedAt) return false
-          const completedDate = new Date(todo.completedAt)
-          return format(completedDate, "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
-        }).length
-      }).reverse()
+          if (!todo.completedAt) return false;
+          const completedDate = new Date(todo.completedAt);
+          return format(completedDate, "yyyy-MM-dd") === format(date, "yyyy-MM-dd");
+        }).length;
+      });
+      // *** END MODIFIED WEEKLY PROGRESS CALCULATION ***
 
       return {
         totalXP,
