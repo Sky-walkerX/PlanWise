@@ -27,6 +27,7 @@ export const config = {
   // This example protects all paths under /dashboard and /profile.
   matcher: [
     "/profile/:path*",
+    "/((?!api|_next/static|_next/image|favicon.ico|public).*)", // Exclude API routes and static files
     // Add other paths you want to protect here, e.g., "/settings", "/admin/:path*"
   ],
 };
