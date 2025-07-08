@@ -63,7 +63,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     // --- IMPORTANT: This signIn callback is crucial for OAuth when NOT using PrismaAdapter ---
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account}) {
       // This callback runs after a successful authentication with any provider
       // 'user' here is the object returned by the provider (e.g., Google profile for GoogleProvider)
 
