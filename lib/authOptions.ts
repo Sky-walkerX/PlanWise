@@ -3,12 +3,14 @@ import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs"; // For password comparison
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
 // Import PrismaClient from your generated client
 import { PrismaClient } from "@/app/generated/prisma";
 const prisma = new PrismaClient(); // Instantiate Prisma Client
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET,
   session: {
     strategy: "jwt", // Use JWT strategy for stateless sessions
@@ -72,6 +74,7 @@ export const authOptions: NextAuthOptions = {
       // On initial sign-in, `user` object will be available from `authorize` or OAuth provider
       if (user) {
         token.id = user.id; // Add user ID to the token
+        token.sub = user.id ?? token.sub; //
         token.email = user.email; // Add email to token
         token.name = user.name; // Add name to token
 
