@@ -15,13 +15,11 @@ const UpdateSchema = z.object({
 });
 
 // PUT /api/todos/:id - Update a specific todo for the authenticated user
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // Log the start of the PUT handler
   console.log("\n--- [PUT /api/todos/:id] Handler Triggered ---");
 
   try {
-    console.log("Incoming request headers:", req.headers);
-    console.log("Value of process.env.AUTH_SECRET:", process.env.AUTH_SECRET);
 
     // Get the JWT token from the request, explicitly providing the secret
     const token = await getToken({
@@ -41,17 +39,15 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     // Parse the request body using the Zod schema
     const body = await req.json();
+    const resolvedParams = await params; // Resolve the promise to get the actual params
     const parsed = UpdateSchema.safeParse(body);
 
-    // If validation fails, return a 400 error with issues
     if (!parsed.success) {
       console.error("Invalid data for todo update:", parsed.error.flatten());
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    // Extract the todo ID from the URL parameters
-    const todoId = params.id;
-    console.log(`Attempting to update todo with ID: ${todoId} for user: ${token.sub}`);
+    const todoId = resolvedParams.id;
 
     // Update the todo in the database, ensuring it belongs to the authenticated user
     const todo = await prisma.todo.updateMany({
@@ -76,13 +72,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE /api/todos/:id - Delete a specific todo for the authenticated user
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // Log the start of the DELETE handler
   console.log("\n--- [DELETE /api/todos/:id] Handler Triggered ---");
 
   try {
-    console.log("Incoming request headers:", req.headers);
-    console.log("Value of process.env.AUTH_SECRET:", process.env.AUTH_SECRET);
+    const resolvedParams = await params; // Resolve the promise to get the actual params
 
     // Get the JWT token from the request, explicitly providing the secret
     const token = await getToken({
@@ -101,10 +96,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     console.log(`Validation successful. User ID from token: ${token.sub}`);
 
     // Extract the todo ID from the URL parameters
-    const todoId = params.id;
-    console.log(`Attempting to delete todo with ID: ${todoId} for user: ${token.sub}`);
-
-    // Delete the todo from the database, ensuring it belongs to the authenticated user
+    const todoId = resolvedParams.id;
     const deleted = await prisma.todo.deleteMany({
       where: {
         id: todoId,
@@ -112,8 +104,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       },
     });
 
-    console.log("Todo deletion result:", deleted);
-    // Return a success message and the count of deleted records
     return NextResponse.json({ success: true, deleted });
   } catch (error) {
     console.error("An unexpected error occurred in DELETE /api/todos/:id:", error);
