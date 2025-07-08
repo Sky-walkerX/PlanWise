@@ -24,14 +24,10 @@ export default function LoginPage() {
    const loginMutation = useMutation({
     mutationFn: async () => {
       const result = await signIn("credentials", {
-        redirect: false,
+        callbackUrl: "/",
         email,
         password,
       });
-
-      // --- ADD THIS CONSOLE LOG ---
-      console.log("SIGN-IN RESULT FROM SERVER:", result);
-      // -----------------------------
 
       if (result?.error) {
         // The error property will contain the message from your `authorize` function
@@ -43,11 +39,9 @@ export default function LoginPage() {
       }
       return result;
     },
-    onSuccess: (data) => {
-      // --- ADD THIS CONSOLE LOG ---
-      console.log("Login successful on client, redirecting...", data);
-      // -----------------------------
-      router.push("/"); // Or ideally to a dashboard page like "/tasks"
+    onSuccess: () => {
+      router.refresh();
+      router.push("/");
     },
     onError: (err: Error) => {
       setError(err.message);
@@ -142,26 +136,6 @@ export default function LoginPage() {
               </div>
             </div>
           </div>
-
-          {/* Testimonial */}
-          {/* <div className="p-6 rounded-xl bg-[var(--secondarybg)]/30 border border-[var(--secondarybg)] dark:border-[var(--secondarybgdark)]">
-            <p className="text-[var(--accent2bg)]  italic mb-3">
-              "PlanWise transformed how I manage my daily tasks. The AI suggestions are incredibly helpful!"
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[var(--accent1bg)]  flex items-center justify-center text-white text-sm font-semibold">
-                S
-              </div>
-              <div>
-                <p className="font-medium text-[var(--accent2bg)]  text-sm">
-                  Sarah Chen
-                </p>
-                <p className="text-[var(--mutedbg)] text-xs">
-                  Product Manager
-                </p>
-              </div>
-            </div>
-          </div> */}
         </div>
 
         {/* Right Side - Login Form */}

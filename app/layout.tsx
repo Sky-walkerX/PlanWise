@@ -4,7 +4,7 @@ import "./globals.css";
 import NextAuthSessionProvider from "./components/Providers";
 import { Providers } from "./components/QueryProviders";
 import Navbar from "./components/Navbar";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "next-themes"; // Import ThemeProvider
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,12 +30,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // Add suppressHydrationWarning to the <html> tag
+    // This tells React to suppress the hydration warning for this element and its attributes.
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--primarybg)] text-[var(--primarytext)]`}
       >
         <NextAuthSessionProvider>
           <Providers>
+            {/* ThemeProvider correctly wraps your components */}
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               <Navbar />
               {children}
