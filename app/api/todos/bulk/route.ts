@@ -50,10 +50,15 @@ export async function POST(request: NextRequest) {
 
     console.log(`Validation successful. User ID from token: ${token.sub}`);
 
-    // Parse the request body using the Zod schema for bulk creation
+    // Parse the request body. The client sends { todos: [...] }
     const body = await request.json();
-    console.log("Received body for bulk create:", body);
-    const parsedBody = BulkCreateSchema.safeParse(body);
+    console.log("Received raw body for bulk create:", body);
+
+    // Extract the 'todos' array from the received body object
+    const todosArray = body.todos;
+
+    // Validate the extracted array using the BulkCreateSchema
+    const parsedBody = BulkCreateSchema.safeParse(todosArray);
 
     // If validation fails, return a 400 error with issues
     if (!parsedBody.success) {
