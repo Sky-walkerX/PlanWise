@@ -79,7 +79,7 @@ Example:
     console.log("Prompt generated. Length:", prompt.length);
     // console.log("Full prompt:\n", prompt); // Uncomment temporarily if you suspect prompt content
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     console.log("Gemini model instance created.");
 
     // Step where API call is made

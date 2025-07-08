@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     `;
 
     // Get the Generative AI model and generate content
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     console.log("Sending prompt to AI model...");
     const result = await model.generateContent(prompt);
     const text = result.response.text();
