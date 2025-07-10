@@ -258,15 +258,20 @@ export default function TasksPage() {
     })
   }
 
-  // Save edit
   const saveEdit = (id: string) => {
     if (!formData.title.trim()) return
+
+    let formattedDueDate: string | undefined = undefined
+    if (formData.dueDate) {
+      const dateObject = new Date(formData.dueDate);
+      formattedDueDate = dateObject.toISOString();
+    }
 
     handleUpdate(id, {
       title: formData.title.trim(),
       description: formData.description.trim() || undefined,
       priority: formData.priority,
-      dueDate: formData.dueDate || undefined,
+      dueDate: formattedDueDate, 
       estimatedTime: formData.estimatedTime ? Number.parseInt(formData.estimatedTime) : undefined,
     })
   }
