@@ -106,8 +106,11 @@ export const TaskRow = memo(function TaskRow({ task }: { task: TaskWithSubtasks 
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`rounded-md ${isDragging ? "relative z-10 bg-background shadow-md" : ""} ${pending ? "pointer-events-none opacity-60" : ""}`}
     >
-      {/* Header row */}
-      <div className="group flex items-center gap-1.5 rounded-md px-1 py-1.5 transition-colors hover:bg-muted/60">
+      {/* Header row — depth 1 of the plan tree (gutter + rail come from .lk-trow) */}
+      <div
+        data-depth="1"
+        className="lk-trow group flex items-center gap-1.5 rounded-r-md py-1.5 pr-1 transition-colors"
+      >
         <button
           type="button"
           className="lk-grip"
@@ -243,9 +246,12 @@ export const TaskRow = memo(function TaskRow({ task }: { task: TaskWithSubtasks 
         </div>
       </div>
 
-      {/* Expanded body: notes + subtasks */}
+      {/* Expanded body. Notes sit in their own indented block, but the subtask
+          rows stay at the tree's left edge so their rails and line numbers line
+          up with every other row. */}
       {open && (
-        <div className="mb-1 ml-[34px] mr-1 flex flex-col gap-1.5 border-l border-border/60 pb-1 pl-2.5 pt-1">
+        <>
+        <div data-depth="1" className="lk-tsub mb-1 mr-1 flex flex-col gap-1.5 pb-1 pt-1">
           {/* Notes */}
           {editingNotes ? (
             <NotesEditor
@@ -280,20 +286,21 @@ export const TaskRow = memo(function TaskRow({ task }: { task: TaskWithSubtasks 
               <FileText size={12} /> Add notes
             </button>
           )}
-
-          {/* Subtasks */}
-          <div className="flex flex-col">
-            <SortableList
-              ids={subtasks.map((s) => s.id)}
-              onReorder={(ids) => reorderSubtasks.mutate({ ids })}
-            >
-              {subtasks.map((s) => (
-                <SubtaskRow key={s.id} subtask={s} />
-              ))}
-            </SortableList>
-            <AddSubtask taskId={task.id} />
-          </div>
         </div>
+
+        {/* Subtasks — depth 2 rows, plus an add form aligned with them */}
+        <SortableList
+          ids={subtasks.map((s) => s.id)}
+          onReorder={(ids) => reorderSubtasks.mutate({ ids })}
+        >
+          {subtasks.map((s) => (
+            <SubtaskRow key={s.id} subtask={s} />
+          ))}
+        </SortableList>
+        <div data-depth="2" className="lk-tsub mb-1">
+          <AddSubtask taskId={task.id} />
+        </div>
+        </>
       )}
     </div>
   );

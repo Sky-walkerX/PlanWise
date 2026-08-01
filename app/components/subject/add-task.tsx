@@ -27,7 +27,7 @@ export function AddTask({
   };
 
   return (
-    <form onSubmit={submit} className="flex items-center gap-2 px-1.5 py-1">
+    <form onSubmit={submit} className="flex items-center gap-2 py-1 pr-1.5">
       <Plus size={14} className="text-muted-foreground" />
       <input
         value={title}

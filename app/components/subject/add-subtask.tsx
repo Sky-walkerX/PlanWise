@@ -5,7 +5,8 @@ import { Plus } from "lucide-react";
 import { useCreateSubtask } from "@/hooks/useSubtasks";
 
 // With `parentId`, adds a child under that (top-level) subtask instead of the
-// task's own list; the nested form drops the indent its parent already gives.
+// task's own list. Indentation is the caller's job (a `.lk-tsub` wrapper at the
+// depth the new row will land on), so the form itself is flush.
 export function AddSubtask({ taskId, parentId }: { taskId: string; parentId?: string }) {
   const [title, setTitle] = useState("");
   const create = useCreateSubtask();
@@ -20,10 +21,7 @@ export function AddSubtask({ taskId, parentId }: { taskId: string; parentId?: st
   };
 
   return (
-    <form
-      onSubmit={submit}
-      className={`flex items-center gap-1.5 py-1 pr-1.5 ${parentId ? "pl-1" : "pl-7"}`}
-    >
+    <form onSubmit={submit} className="flex items-center gap-1.5 py-1 pr-1.5">
       <Plus size={12} className="text-muted-foreground" />
       <input
         value={title}

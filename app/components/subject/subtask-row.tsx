@@ -38,6 +38,8 @@ export const SubtaskRow = memo(function SubtaskRow({
   const [titleVal, setTitleVal] = useState(subtask.title);
   const [editingNotes, setEditingNotes] = useState(false);
 
+  // Plan-tree depth: tasks are 1, so a subtask is 2 and its child items are 3.
+  const depth = isChild ? 3 : 2;
   const children = subtask.children ?? [];
   const childDone = children.filter((c) => c.isCompleted).length;
   const hasNotes = subtask.notes.trim().length > 0;
@@ -69,7 +71,10 @@ export const SubtaskRow = memo(function SubtaskRow({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`rounded-md ${isDragging ? "relative z-10 bg-muted/70 shadow-sm" : ""} ${pending ? "pointer-events-none opacity-60" : ""}`}
     >
-      <div className="group flex items-center gap-1.5 py-1 pl-1 pr-1.5">
+      <div
+        data-depth={depth}
+        className="lk-trow group flex items-center gap-1.5 rounded-r-md py-1 pr-1.5"
+      >
         <button
           type="button"
           className="lk-grip"
@@ -152,7 +157,8 @@ export const SubtaskRow = memo(function SubtaskRow({
       </div>
 
       {open && (
-        <div className="mb-1 ml-7 mr-1.5 flex flex-col gap-1.5">
+        <>
+        <div data-depth={depth} className="lk-tsub mb-1 mr-1.5 flex flex-col gap-1.5">
           {editingNotes ? (
             <NotesEditor
               value={subtask.notes}
@@ -186,22 +192,27 @@ export const SubtaskRow = memo(function SubtaskRow({
               <FileText size={12} /> Add notes
             </button>
           )}
+        </div>
 
-          {/* Child items — top-level subtasks only (children can't nest further) */}
-          {!isChild && (
-            <div className="flex flex-col border-l border-border/60 pl-2">
-              <SortableList
-                ids={children.map((c) => c.id)}
-                onReorder={(ids) => reorderChildren.mutate({ ids })}
-              >
-                {children.map((c) => (
-                  <SubtaskRow key={c.id} subtask={c} isChild />
-                ))}
-              </SortableList>
+        {/* Child items — top-level subtasks only (children can't nest further).
+            Kept out of the notes block so their rails/line numbers stay aligned
+            with the rest of the tree. */}
+        {!isChild && (
+          <>
+            <SortableList
+              ids={children.map((c) => c.id)}
+              onReorder={(ids) => reorderChildren.mutate({ ids })}
+            >
+              {children.map((c) => (
+                <SubtaskRow key={c.id} subtask={c} isChild />
+              ))}
+            </SortableList>
+            <div data-depth="3" className="lk-tsub mb-1">
               <AddSubtask taskId={subtask.taskId} parentId={subtask.id} />
             </div>
-          )}
-        </div>
+          </>
+        )}
+        </>
       )}
     </div>
   );

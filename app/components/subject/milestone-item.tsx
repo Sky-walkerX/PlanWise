@@ -193,8 +193,9 @@ export const MilestoneItem = memo(function MilestoneItem({
             </button>
           )}
 
-          {/* Tasks */}
-          <div className="flex flex-col gap-0.5">
+          {/* Tasks — one plan tree: rows number themselves off this counter and
+              sit flush so the depth rails run unbroken down the milestone. */}
+          <div className="lk-tree flex flex-col">
             <SortableList
               ids={milestone.tasks.map((t) => t.id)}
               onReorder={(ids) => reorderTasks.mutate({ ids })}
@@ -203,7 +204,9 @@ export const MilestoneItem = memo(function MilestoneItem({
                 <TaskRow key={t.id} task={t} />
               ))}
             </SortableList>
-            <AddTask subjectId={milestone.subjectId} milestoneId={milestone.id} />
+            <div data-depth="1" className="lk-tsub">
+              <AddTask subjectId={milestone.subjectId} milestoneId={milestone.id} />
+            </div>
           </div>
         </div>
       )}

@@ -302,6 +302,52 @@
   .lk-grip:hover { color: var(--foreground); background: var(--muted); }
   .lk-grip:active { cursor: grabbing; }
 
+  /* ---------------------------- Plan tree ----------------------------
+     Depth in the milestone→task→item tree is carried by two signals besides
+     indentation: an editor-style line gutter and a left rail in the subject's
+     color that fades one step per level.
+     The gutter number is a CSS counter, so it counts only the rows actually in
+     the DOM — collapsing a task removes its children and the numbering closes
+     up on its own, with no shared expand state to lift. Every row therefore has
+     to sit in the same `.lk-tree` container at the same left edge: nesting is
+     expressed by `--lk-depth` padding *inside* the row, never by wrapping the
+     rows in an indented div. */
+  .lk-tree { counter-reset: lk-line; }
+
+  /* depth = rail strength + indent; row 1 is a task, 2 a subtask, 3 a child item */
+  .lk-trow[data-depth="1"], .lk-tsub[data-depth="1"] { --lk-rail: 55%; --lk-indent: 0px; }
+  .lk-trow[data-depth="2"], .lk-tsub[data-depth="2"] { --lk-rail: 26%; --lk-indent: 20px; }
+  .lk-trow[data-depth="3"], .lk-tsub[data-depth="3"] { --lk-rail: 12%; --lk-indent: 40px; }
+
+  .lk-trow {
+    counter-increment: lk-line;
+    position: relative;
+    border-left: 2px solid color-mix(in srgb, var(--c-eff, var(--foreground)) var(--lk-rail, 0%), transparent);
+    padding-left: calc(34px + var(--lk-indent, 0px));
+  }
+  .lk-trow::before {
+    content: counter(lk-line);
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: flex-end;
+    width: 24px;
+    font-family: var(--lk-font-mono);
+    font-size: 10.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted-foreground);
+    opacity: 0.38;
+    pointer-events: none;
+  }
+  .lk-trow:hover { background: color-mix(in srgb, var(--muted) 55%, transparent); }
+  .lk-trow:hover::before { opacity: 0.75; }
+
+  /* Content hanging off a row (notes, the add-a-row form) keeps the gutter
+     clear and lines up with that row's own children. */
+  .lk-tsub {
+    border-left: 2px solid transparent;
+    padding-left: calc(34px + var(--lk-indent, 0px));
+  }
+
   /* Type pill for resources — outlined, mono, neutral */
   .lk-tag {
     font-family: var(--lk-font-mono);

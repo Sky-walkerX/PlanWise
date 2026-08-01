@@ -60,7 +60,7 @@ export default function SubjectPage() {
             <div className="lk-sec mb-3">
               tasks · no milestone{subject.tasks.length > 0 ? ` · ${looseDone}/${subject.tasks.length}` : ""}
             </div>
-            <div className="lk-card flex flex-col gap-0.5 p-2">
+            <div className="lk-card lk-tree flex flex-col p-2">
               <SortableList
                 ids={subject.tasks.map((t) => t.id)}
                 onReorder={(ids) => reorderTasks.mutate({ ids })}
@@ -69,7 +69,9 @@ export default function SubjectPage() {
                   <TaskRow key={t.id} task={t} />
                 ))}
               </SortableList>
-              <AddTask subjectId={subject.id} />
+              <div data-depth="1" className="lk-tsub">
+                <AddTask subjectId={subject.id} />
+              </div>
             </div>
           </section>
         </div>
