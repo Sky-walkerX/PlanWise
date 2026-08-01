@@ -101,7 +101,7 @@ export const SubtaskRow = memo(function SubtaskRow({
                   setRenaming(false);
                 }
               }}
-              className="h-6 text-[13px]"
+              className="lk-mono h-6 text-[13px]"
             />
           </form>
         ) : (
@@ -115,7 +115,7 @@ export const SubtaskRow = memo(function SubtaskRow({
               className={`flex-none text-muted-foreground/70 transition-transform ${open ? "rotate-90" : ""} ${hasNotes || children.length ? "" : "opacity-40"}`}
             />
             <span
-              className={`truncate text-[13px] ${subtask.isCompleted ? "text-muted-foreground line-through" : ""}`}
+              className={`lk-mono truncate text-[13px] ${subtask.isCompleted ? "text-muted-foreground line-through" : ""}`}
             >
               {subtask.title}
             </span>

@@ -130,7 +130,7 @@ export const TaskRow = memo(function TaskRow({ task }: { task: TaskWithSubtasks 
             className={`flex-none text-muted-foreground transition-transform ${open ? "rotate-90" : ""} ${subtasks.length || hasNotes ? "" : "opacity-40"}`}
           />
           <span
-            className={`truncate text-sm ${task.isCompleted ? "text-muted-foreground line-through" : ""}`}
+            className={`lk-mono truncate text-sm ${task.isCompleted ? "text-muted-foreground line-through" : ""}`}
           >
             {task.title}
           </span>
@@ -185,7 +185,12 @@ export const TaskRow = memo(function TaskRow({ task }: { task: TaskWithSubtasks 
             <PopoverContent align="end" className="w-72">
               <form onSubmit={saveEdit} className="flex flex-col gap-3">
                 <div className="lk-sec">Edit task</div>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task" />
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Task"
+                  className="lk-mono"
+                />
                 <div className="flex gap-2">
                   <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
                     <SelectTrigger className="flex-1" size="sm">
