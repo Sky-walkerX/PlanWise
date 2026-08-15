@@ -54,6 +54,8 @@ export function useCreateMilestone() {
   });
 }
 
+// The optimistic patch plus the server's returned row cover every field here,
+// so no refetch — a title/notes edit changes nothing outside this milestone.
 export function useUpdateMilestone() {
   const qc = useQueryClient();
   const invalidate = useInvalidate();
@@ -72,8 +74,17 @@ export function useUpdateMilestone() {
       }));
       return { prev };
     },
-    onError: (_e, _v, ctx) => restoreSubjectCaches(qc, ctx?.prev),
-    onSettled: invalidate,
+    onSuccess: (milestone) => {
+      qc.setQueriesData<SubjectDetail>({ queryKey: ["subject"] }, (old) =>
+        old ? replaceMilestone(old, milestone.id, milestone) : old,
+      );
+    },
+    // A failed save still refetches, so the rolled-back cache can't drift from a
+    // server that may have applied part of the write.
+    onError: (_e, _v, ctx) => {
+      restoreSubjectCaches(qc, ctx?.prev);
+      invalidate();
+    },
   });
 }
 

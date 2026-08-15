@@ -35,6 +35,9 @@ export const MilestoneItem = memo(function MilestoneItem({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleVal, setTitleVal] = useState(milestone.title);
   const [editingNotes, setEditingNotes] = useState(false);
+  // Saving closes the editor immediately (the cache is patched optimistically),
+  // so a failed save has nowhere to put the text — park it here and reopen.
+  const [failedNotes, setFailedNotes] = useState<string | null>(null);
 
   const total = milestone.tasks.length;
   const done = milestone.tasks.filter((t) => t.isCompleted).length;
@@ -51,6 +54,25 @@ export const MilestoneItem = memo(function MilestoneItem({
   const startEditingTitle = () => {
     setTitleVal(milestone.title);
     setEditingTitle(true);
+  };
+
+  const openNotes = () => {
+    setFailedNotes(null);
+    setEditingNotes(true);
+  };
+
+  const saveNotes = (v: string) => {
+    setEditingNotes(false);
+    setFailedNotes(null);
+    update.mutate(
+      { id: milestone.id, data: { notes: v } },
+      {
+        onError: () => {
+          setFailedNotes(v);
+          setEditingNotes(true);
+        },
+      },
+    );
   };
 
   const saveTitle = () => {
@@ -159,16 +181,13 @@ export const MilestoneItem = memo(function MilestoneItem({
           {editingNotes ? (
             <div className="mb-3">
               <NotesEditor
-                value={milestone.notes}
-                saving={update.isPending}
+                value={failedNotes ?? milestone.notes}
                 placeholder="Notes — markdown supported (headings, lists, code, tables, links)…"
-                onSave={(v) =>
-                  update.mutate(
-                    { id: milestone.id, data: { notes: v } },
-                    { onSuccess: () => setEditingNotes(false) },
-                  )
-                }
-                onCancel={() => setEditingNotes(false)}
+                onSave={saveNotes}
+                onCancel={() => {
+                  setEditingNotes(false);
+                  setFailedNotes(null);
+                }}
               />
             </div>
           ) : milestone.notes.trim() ? (
@@ -176,7 +195,7 @@ export const MilestoneItem = memo(function MilestoneItem({
               <Markdown>{milestone.notes}</Markdown>
               <button
                 type="button"
-                onClick={() => setEditingNotes(true)}
+                onClick={openNotes}
                 className="lk-iconbtn absolute right-1 top-1 opacity-0 transition-opacity group-hover/notes:opacity-100"
                 title="Edit notes"
               >
@@ -186,7 +205,7 @@ export const MilestoneItem = memo(function MilestoneItem({
           ) : (
             <button
               type="button"
-              onClick={() => setEditingNotes(true)}
+              onClick={openNotes}
               className="lk-mono mb-3 flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
             >
               <FileText size={13} /> Add notes

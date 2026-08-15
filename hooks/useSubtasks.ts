@@ -68,6 +68,10 @@ export function useCreateSubtask() {
   });
 }
 
+// No invalidation: the optimistic patch already covers every field this can
+// change, and the server's row is written straight into the cache on success.
+// Subtasks feed no other query (the subject grid counts tasks, not subtasks),
+// so refetching the whole subject tree here was pure round-trip cost.
 export function useUpdateSubtask() {
   const qc = useQueryClient();
   const invalidate = useInvalidate();
@@ -87,8 +91,17 @@ export function useUpdateSubtask() {
       );
       return { prev };
     },
-    onError: (_e, _v, ctx) => restoreSubjectCaches(qc, ctx?.prev),
-    onSettled: invalidate,
+    onSuccess: (subtask) => {
+      qc.setQueriesData<SubjectDetail>({ queryKey: ["subject"] }, (old) =>
+        old ? replaceSubtask(old, subtask.id, subtask) : old,
+      );
+    },
+    // A failed save still refetches, so the rolled-back cache can't drift from a
+    // server that may have applied part of the write.
+    onError: (_e, _v, ctx) => {
+      restoreSubjectCaches(qc, ctx?.prev);
+      invalidate();
+    },
   });
 }
 

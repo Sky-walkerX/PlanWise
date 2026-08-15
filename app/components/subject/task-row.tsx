@@ -50,6 +50,9 @@ export const TaskRow = memo(function TaskRow({ task }: { task: TaskWithSubtasks 
   const [due, setDue] = useState(task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : "");
   const [recurrence, setRecurrence] = useState<"NONE" | Recurrence>(task.recurrence ?? "NONE");
   const [editingNotes, setEditingNotes] = useState(false);
+  // Saving closes the editor immediately (the cache is patched optimistically),
+  // so a failed save has nowhere to put the text — park it here and reopen.
+  const [failedNotes, setFailedNotes] = useState<string | null>(null);
 
   const dueDate = task.dueDate ? new Date(task.dueDate) : null;
   const overdue = !task.isCompleted && dueDate ? isBefore(dueDate, startOfDay(new Date())) : false;
@@ -81,6 +84,25 @@ export const TaskRow = memo(function TaskRow({ task }: { task: TaskWithSubtasks 
       setRecurrence(task.recurrence ?? "NONE");
     }
     setEditOpen(o);
+  };
+
+  const openNotes = () => {
+    setFailedNotes(null);
+    setEditingNotes(true);
+  };
+
+  const saveNotes = (v: string) => {
+    setEditingNotes(false);
+    setFailedNotes(null);
+    update.mutate(
+      { id: task.id, data: { description: v } },
+      {
+        onError: () => {
+          setFailedNotes(v);
+          setEditingNotes(true);
+        },
+      },
+    );
   };
 
   const saveEdit = (e: React.FormEvent) => {
@@ -255,22 +277,19 @@ export const TaskRow = memo(function TaskRow({ task }: { task: TaskWithSubtasks 
           {/* Notes */}
           {editingNotes ? (
             <NotesEditor
-              value={task.description ?? ""}
-              saving={update.isPending}
-              onSave={(v) =>
-                update.mutate(
-                  { id: task.id, data: { description: v } },
-                  { onSuccess: () => setEditingNotes(false) },
-                )
-              }
-              onCancel={() => setEditingNotes(false)}
+              value={failedNotes ?? task.description ?? ""}
+              onSave={saveNotes}
+              onCancel={() => {
+                setEditingNotes(false);
+                setFailedNotes(null);
+              }}
             />
           ) : hasNotes ? (
             <div className="group/n relative rounded-md bg-muted/40 p-2.5">
               <Markdown>{task.description ?? ""}</Markdown>
               <button
                 type="button"
-                onClick={() => setEditingNotes(true)}
+                onClick={openNotes}
                 className="lk-iconbtn absolute right-0.5 top-0.5 opacity-0 transition-opacity group-hover/n:opacity-100"
                 title="Edit notes"
               >
@@ -280,7 +299,7 @@ export const TaskRow = memo(function TaskRow({ task }: { task: TaskWithSubtasks 
           ) : (
             <button
               type="button"
-              onClick={() => setEditingNotes(true)}
+              onClick={openNotes}
               className="lk-mono flex items-center gap-1.5 text-[10.5px] uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
             >
               <FileText size={12} /> Add notes

@@ -37,6 +37,9 @@ export const SubtaskRow = memo(function SubtaskRow({
   const [renaming, setRenaming] = useState(false);
   const [titleVal, setTitleVal] = useState(subtask.title);
   const [editingNotes, setEditingNotes] = useState(false);
+  // Saving closes the editor immediately (the cache is patched optimistically),
+  // so a failed save has nowhere to put the text — park it here and reopen.
+  const [failedNotes, setFailedNotes] = useState<string | null>(null);
 
   // Plan-tree depth: tasks are 1, so a subtask is 2 and its child items are 3.
   const depth = isChild ? 3 : 2;
@@ -56,6 +59,25 @@ export const SubtaskRow = memo(function SubtaskRow({
   const startRenaming = () => {
     setTitleVal(subtask.title);
     setRenaming(true);
+  };
+
+  const openNotes = () => {
+    setFailedNotes(null);
+    setEditingNotes(true);
+  };
+
+  const saveNotes = (v: string) => {
+    setEditingNotes(false);
+    setFailedNotes(null);
+    update.mutate(
+      { id: subtask.id, data: { notes: v } },
+      {
+        onError: () => {
+          setFailedNotes(v);
+          setEditingNotes(true);
+        },
+      },
+    );
   };
 
   const saveTitle = () => {
@@ -161,22 +183,19 @@ export const SubtaskRow = memo(function SubtaskRow({
         <div data-depth={depth} className="lk-tsub mb-1 mr-1.5 flex flex-col gap-1.5">
           {editingNotes ? (
             <NotesEditor
-              value={subtask.notes}
-              saving={update.isPending}
-              onSave={(v) =>
-                update.mutate(
-                  { id: subtask.id, data: { notes: v } },
-                  { onSuccess: () => setEditingNotes(false) },
-                )
-              }
-              onCancel={() => setEditingNotes(false)}
+              value={failedNotes ?? subtask.notes}
+              onSave={saveNotes}
+              onCancel={() => {
+                setEditingNotes(false);
+                setFailedNotes(null);
+              }}
             />
           ) : hasNotes ? (
             <div className="group/n relative rounded-md bg-muted/40 p-2.5">
               <Markdown>{subtask.notes}</Markdown>
               <button
                 type="button"
-                onClick={() => setEditingNotes(true)}
+                onClick={openNotes}
                 className="lk-iconbtn absolute right-0.5 top-0.5 opacity-0 transition-opacity group-hover/n:opacity-100"
                 title="Edit notes"
               >
@@ -186,7 +205,7 @@ export const SubtaskRow = memo(function SubtaskRow({
           ) : (
             <button
               type="button"
-              onClick={() => setEditingNotes(true)}
+              onClick={openNotes}
               className="lk-mono flex items-center gap-1.5 text-[10.5px] uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
             >
               <FileText size={12} /> Add notes

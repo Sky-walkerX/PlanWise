@@ -58,6 +58,10 @@ model Subject {
   milestones Milestone[]
   resources  Resource[]
   tasks      Task[]
+
+  // Postgres does not index foreign keys automatically; every list/detail read
+  // filters on them. Composite order mirrors the query's where + orderBy.
+  @@index([userId, isArchived, updatedAt(sort: Desc)])
 }
 
 model Milestone {
@@ -73,6 +77,8 @@ model Milestone {
   subjectId String
 
   tasks Task[]
+
+  @@index([subjectId, order])
 }
 
 model Task {
@@ -101,6 +107,13 @@ model Task {
 
   subtasks      Subtask[]
   timerSessions TimerSession[]
+
+  // Loose-task list on the subject detail (milestoneId null) and the tasks
+  // nested under each milestone.
+  @@index([subjectId, milestoneId, order])
+  @@index([milestoneId, order])
+  // Cross-subject "Today": userId + isCompleted + dueDate range, ordered by dueDate.
+  @@index([userId, isCompleted, dueDate])
 }
 
 // A lightweight checklist item under a Task. Scoped to a user through its task's
@@ -122,6 +135,10 @@ model Subtask {
   parent   Subtask?  @relation("SubtaskChildren", fields: [parentId], references: [id], onDelete: Cascade)
   parentId String?
   children Subtask[] @relation("SubtaskChildren")
+
+  // Top-level rows per task (parentId null), and each parent's children.
+  @@index([taskId, parentId, order])
+  @@index([parentId, order])
 }
 
 model Resource {
@@ -138,6 +155,9 @@ model Resource {
 
   subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   subjectId String
+
+  @@index([subjectId, createdAt(sort: Desc)])
+  @@index([userId])
 }
 
 model TimerSession {
@@ -148,4 +168,6 @@ model TimerSession {
 
   task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
   taskId String
+
+  @@index([taskId, startedAt])
 }

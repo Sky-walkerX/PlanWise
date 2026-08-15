@@ -108,6 +108,15 @@ export function useCreateTask() {
   });
 }
 
+// Fields whose change reaches beyond the patched row and so needs a refetch:
+// completion moves the subject grid's progress and the cross-subject Today
+// list, a due date moves Today, and a milestone move relocates the task between
+// lists the optimistic patch leaves in place. Completing a recurring task also
+// spawns its next instance server-side. Everything else (notes, title,
+// priority, estimate) is fully covered by the patch + the returned row.
+const needsRefetch = (data: UpdateTaskInput) =>
+  data.isCompleted !== undefined || data.dueDate !== undefined || data.milestoneId !== undefined;
+
 // Optimistic: patch the cached task immediately so the checkbox/edit reflects
 // instantly, then reconcile with the server on settle.
 export function useUpdateTask() {
@@ -128,8 +137,17 @@ export function useUpdateTask() {
       );
       return { prev };
     },
+    onSuccess: (task) => {
+      qc.setQueriesData<SubjectDetail>({ queryKey: ["subject"] }, (old) =>
+        old ? replaceTask(old, task.id, task) : old,
+      );
+    },
     onError: (_e, _v, ctx) => restoreSubjectCaches(qc, ctx?.prev),
-    onSettled: () => invalidate(),
+    // A failed save also refetches, so the rolled-back cache can't drift from a
+    // server that may have applied part of the write.
+    onSettled: (_d, error, { data }) => {
+      if (error || needsRefetch(data)) invalidate();
+    },
   });
 }
 

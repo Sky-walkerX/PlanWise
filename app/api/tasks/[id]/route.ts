@@ -2,7 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { addDays, addWeeks, addMonths } from "date-fns";
 import prisma from "@/lib/prisma";
 import { getUserId } from "@/lib/auth";
-import { Prisma, type Recurrence } from "@/app/generated/prisma";
+import { Prisma, type Recurrence, type Task } from "@/app/generated/prisma";
+import { setClause } from "@/lib/sql";
 import { z } from "zod";
 
 const UpdateTaskSchema = z.object({
@@ -40,9 +41,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Invalid data", issues: parsed.error.issues }, { status: 400 });
   }
 
-  const existing = await prisma.task.findFirst({ where: { id, userId } });
-  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
   const { dueDate, isCompleted, ...rest } = parsed.data;
   // Unchecked variant: we set the milestoneId foreign key as a scalar directly.
   const data: Prisma.TaskUncheckedUpdateInput = { ...rest };
@@ -53,9 +51,32 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     data.completedAt = isCompleted ? new Date() : null;
   }
 
+  // Only completing a task can spawn a recurrence, and that's the one branch
+  // needing the pre-update row. Every other edit (notes, title, priority, …)
+  // skips this read and updates in a single round trip below.
+  if (isCompleted !== true) {
+    const set = setClause(data as Record<string, unknown>);
+    if (!set) return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+
+    // One round trip: ownership rides along in the WHERE, RETURNING hands back
+    // the new row.
+    const n = set.values.length;
+    const [task] = await prisma.$queryRawUnsafe<Task[]>(
+      `UPDATE "Task" SET ${set.clause} WHERE "id" = $${n + 1} AND "userId" = $${n + 2} RETURNING *`,
+      ...set.values,
+      id,
+      userId,
+    );
+    if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(task);
+  }
+
+  const existing = await prisma.task.findFirst({ where: { id, userId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   // Recurring tasks: when one flips incomplete -> complete, spawn the next
   // instance (no background job — regeneration happens right here).
-  const justCompleted = isCompleted === true && !existing.isCompleted;
+  const justCompleted = !existing.isCompleted;
   const recurrence = rest.recurrence !== undefined ? rest.recurrence : existing.recurrence;
   const effectiveDue = dueDate !== undefined ? (dueDate ? new Date(dueDate) : null) : existing.dueDate;
 
