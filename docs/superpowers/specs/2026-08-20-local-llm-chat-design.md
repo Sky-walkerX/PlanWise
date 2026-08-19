@@ -1,7 +1,7 @@
 # Local LLM Chat — Design
 
 **Date:** 2026-08-20
-**Status:** Approved (design)
+**Status:** Implemented and verified
 **Repo:** LockIn (Next.js 15 App Router, React 19, TypeScript, Prisma/Postgres, NextAuth v4 JWT, React Query, Tailwind v4)
 
 ## 1. Overview
@@ -63,7 +63,9 @@ Three thin layers:
 
 The two pure modules are the reason for this split: context shaping and budgeting are where all the tuning will happen as small context windows bite, and here they test without a browser or a database.
 
-**Failure semantics.** If the stream dies mid-reply, the assistant message is never persisted — the transcript simply ends on a user turn. `prepare` detects a trailing unanswered user message and re-sends it instead of inserting a duplicate, so retry is free and idempotent.
+**Failure semantics.** If the stream *fails* mid-reply, the assistant message is never persisted — the transcript simply ends on a user turn. `prepare` detects a trailing unanswered user message and rewrites it rather than inserting a duplicate, so retry (or rephrasing) is free and can't fill a thread with unanswered questions.
+
+A deliberate **stop** is treated differently from a failure: whatever streamed is kept, because the user read it and discarding it would be a worse surprise than a short one.
 
 ## 5. Data model
 
@@ -177,11 +179,17 @@ Paging vs segmentation; TLB numericals are the weak spot.
 - LINK · OSTEP — https://pages.cs.wisc.edu/~remzi/OSTEP/
 ```
 
+Headings inside a user's own notes are demoted to at least `####`. Notes routinely begin with `## Something`, which would otherwise read as a sibling of `## Subject:` and silently re-parent everything after it — the model then attributes one subject's notes to the next. This was caught against real data, not in theory.
+
 Deterministic ordering throughout (milestone `order`, task `order`), so the same data always produces the same digest — which is what makes it testable and what makes prompt caching possible later.
 
 ### System prompt
 
 Fixed, in `lib/chat/prompt.ts`. Establishes: you are a study assistant inside LockIn; the context below is the user's own plan; answer from it where relevant; say plainly when the context doesn't cover something rather than guessing; never invent tasks, deadlines, or progress that aren't in the context.
+
+### Reasoning models
+
+Models such as qwen3 and deepseek-r1 wrap a scratchpad in `<think>` tags. Rendered as-is it buries the answer, so `lib/chat/reasoning.ts` splits the reply and the panel collapses the reasoning behind a toggle. The splitter is written to run on partial text, since during streaming the opening tag arrives long before the closing one.
 
 ### Plain chat
 
@@ -239,7 +247,9 @@ LM Studio: enable CORS in the local-server tab.
 
 ### Mixed content — the secondary footgun
 
-An `https://` page fetching `http://localhost` is normally blocked. Browsers exempt loopback addresses as "potentially trustworthy" origins, so Chrome and Firefox permit it — Safari has historically been stricter. **To be verified against real browsers during implementation**, and documented with its outcome. Fallback if a browser blocks it: run LockIn locally, or terminate TLS in front of the model.
+An `https://` page fetching `http://localhost` is normally blocked. Browsers exempt loopback addresses as "potentially trustworthy" origins, so Chrome and Firefox permit it; Safari has historically been stricter.
+
+**Verified so far:** Chrome, same-origin-ish local case (`http://localhost:3000` → `http://localhost:11434`) works with Ollama's default origin allowlist and needs no configuration. The deployed case — an `https://` origin reaching loopback — **has not been verified**, since it can only be tested from the real deployment. Expect to set `OLLAMA_ORIGINS` there. Fallback if a browser blocks it outright: run LockIn locally, or terminate TLS in front of the model.
 
 ### Error taxonomy
 
@@ -304,17 +314,33 @@ The repo currently has no test runner. This design's central claim is that conte
 - history drops oldest-first and always keeps the newest user message
 - home subject survives longer than the others
 
-No component or end-to-end tests — the repo has no browser harness and adding one is out of scope. Manual verification instead:
+No component or end-to-end tests — the repo has no browser harness as a standing fixture. 46 unit tests cover `context.ts`, `budget.ts` and `reasoning.ts`.
 
-1. Ollama running locally, LockIn on `npm run dev`, connect and list models.
-2. Ask a question on a subject page; confirm the reply cites real milestone/task names.
-3. Kill the model mid-stream; confirm the transcript stays coherent and retry works.
-4. Deselect all subjects; confirm plain chat answers without leaking context.
-5. Save a reply to a milestone note; confirm the page behind updates.
-6. Reload; confirm the conversation is still there.
-7. Point at a wrong port; confirm the CORS/unreachable help appears rather than a raw error.
+**Verified during implementation** (Chrome driven live, real Ollama running `qwen3:8b`, real Postgres):
 
-## 12. Build sequence
+| Check | Result |
+|---|---|
+| Schema round-trip and cascade delete | Conversation delete removed its messages |
+| Digest against real subjects | Correct structure; home subject ordered first |
+| Ownership filter | A foreign `userId` returns `[]` for the same subject ids |
+| `listModels` against Ollama | `Connected · 1 model`, dropdown populated |
+| Wrong path / dead port | Classified as `endpoint` / `cors` with the right copy |
+| Streaming a grounded answer | Model listed exactly the two incomplete task titles |
+| Abort mid-stream | Rejects with `AbortError` |
+| Panel in browser, scoped to a subject page | Subject pre-selected; budget line read `ctx 358/8k · 1 subject` |
+| Save to note | Milestone note updated live behind the panel, prior text preserved |
+| Console errors during the flow | None |
+
+**Not verified:** the deployed `https://` → loopback path (§8), which requires the real deployment.
+
+## 12. Environment prerequisites
+
+Two pre-existing gaps in `.env.local` were found while verifying this feature, both unrelated to chat but blocking it:
+
+- **`DIRECT_URL` pointed at the pgbouncer transaction pooler** (`:6543`, `pgbouncer=true`), a copy of `DATABASE_URL`. Transaction-mode pooling cannot run DDL, so `prisma db push` hung indefinitely rather than failing. It must use the session pooler on `:5432` with no pgbouncer params — exactly what the comment in `schema.prisma` already said.
+- **`AUTH_SECRET` / `NEXTAUTH_SECRET` were absent.** NextAuth's own routes fall back to an internal secret, so signing in appeared to work, but `getUserId` in `lib/auth.ts` passes `process.env.AUTH_SECRET` to `getToken` — `undefined` there means every API route returns 401. This affected all routes, not just chat; React Query silently swallowed the failures elsewhere.
+
+## 13. Build sequence
 
 1. Schema: two models, one enum, back-relations, `prisma db push` + `prisma generate`
 2. Vitest setup

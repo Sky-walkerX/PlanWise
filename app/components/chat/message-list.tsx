@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/app/generated/prisma";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Markdown } from "@/app/components/subject/markdown";
+import { splitReasoning } from "@/lib/chat/reasoning";
 import { SaveToNote } from "./save-to-note";
 
 /**
@@ -57,29 +59,85 @@ export function MessageList({
             {message.content}
           </div>
         ) : (
-          <div key={message.id} className="lk-chat-bubble assistant">
-            <Markdown>{message.content}</Markdown>
-            <div className="mt-2 flex items-center justify-between gap-2">
-              <span className="lk-mono truncate text-[10px] uppercase tracking-wide text-muted-foreground">
-                {message.model ?? ""}
-              </span>
-              {subjectId && <SaveToNote subjectId={subjectId} answer={message.content} />}
-            </div>
-          </div>
+          <AssistantBubble key={message.id} content={message.content} model={message.model} subjectId={subjectId} />
         ),
       )}
 
-      {isStreaming && (
-        <div className="lk-chat-bubble assistant">
-          {streamText ? <Markdown>{streamText}</Markdown> : null}
-          <span className="lk-chat-caret" aria-hidden />
-          <span className="sr-only">Generating a reply</span>
-        </div>
-      )}
+      {isStreaming && <StreamingBubble text={streamText} />}
 
       {error && (
         <div className="lk-card border-destructive p-3">
           <p className="text-[12.5px] leading-relaxed text-destructive">{error}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A stored reply. Reasoning models emit a `<think>` scratchpad that would bury
+ * the answer, so it's split out and collapsed — available, but not in the way.
+ */
+function AssistantBubble({
+  content,
+  model,
+  subjectId,
+}: {
+  content: string;
+  model: string | null;
+  subjectId: string | null;
+}) {
+  const { answer, reasoning } = splitReasoning(content);
+
+  return (
+    <div className="lk-chat-bubble assistant">
+      {reasoning && <Reasoning text={reasoning} />}
+      <Markdown>{answer}</Markdown>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span className="lk-mono truncate text-[10px] uppercase tracking-wide text-muted-foreground">
+          {model ?? ""}
+        </span>
+        {subjectId && <SaveToNote subjectId={subjectId} answer={answer} />}
+      </div>
+    </div>
+  );
+}
+
+/** The reply as it arrives. Shows "thinking" until the answer itself starts. */
+function StreamingBubble({ text }: { text: string }) {
+  const { answer, reasoning, thinking } = splitReasoning(text);
+
+  return (
+    <div className="lk-chat-bubble assistant">
+      {reasoning && <Reasoning text={reasoning} defaultOpen={false} />}
+      {thinking && !answer && (
+        <span className="lk-mono text-[11px] uppercase tracking-wide text-muted-foreground">
+          thinking
+        </span>
+      )}
+      {answer && <Markdown>{answer}</Markdown>}
+      <span className="lk-chat-caret" aria-hidden />
+      <span className="sr-only">Generating a reply</span>
+    </div>
+  );
+}
+
+function Reasoning({ text, defaultOpen = false }: { text: string; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className="mb-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="lk-mono flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />} reasoning
+      </button>
+      {open && (
+        <div className="mt-1.5 whitespace-pre-wrap border-l-2 border-border pl-2.5 text-[11.5px] leading-relaxed text-muted-foreground">
+          {text}
         </div>
       )}
     </div>

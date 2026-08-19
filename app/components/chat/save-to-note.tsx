@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { BookmarkPlus, Check, Loader2 } from "lucide-react";
 import { api } from "@/lib/fetcher";
 import { useSubject } from "@/hooks/useSubjects";
@@ -14,7 +15,9 @@ type Target =
 /** Appended rather than replaced — a note is the user's, and a chat answer is
  *  an addition to it, never a substitution for what they already wrote. */
 function appended(existing: string, answer: string): string {
-  const stamp = new Date().toISOString().slice(0, 10);
+  // Local date, not UTC: a note stamped "yesterday" because the user is east
+  // of Greenwich at 2am is wrong in the only timezone that matters to them.
+  const stamp = format(new Date(), "yyyy-MM-dd");
   const block = `---\n*from chat · ${stamp}*\n\n${answer.trim()}`;
   return existing.trim() ? `${existing.trim()}\n\n${block}` : block;
 }

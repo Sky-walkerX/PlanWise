@@ -34,9 +34,28 @@ function flatten(text: string, cap: number): string {
   return `${oneLine.slice(0, cap).trimEnd()}…`;
 }
 
+/** The digest owns `#`–`###`; user notes are nested below a milestone. */
+const MIN_NOTE_HEADING = 4;
+
+/**
+ * Push any heading inside a user's note down to at least `####`.
+ *
+ * Notes are the user's own markdown and routinely start with `## Something`.
+ * Left alone, that heading reads as a sibling of `## Subject:` and silently
+ * re-parents everything after it — the model then attributes one subject's
+ * notes to the next. Demoting preserves the user's own structure while keeping
+ * the digest's outline intact.
+ */
+function demoteHeadings(markdown: string): string {
+  return markdown.replace(/^(#{1,6})(\s)/gm, (_match, hashes: string, space: string) => {
+    const level = Math.min(6, Math.max(MIN_NOTE_HEADING, hashes.length + MIN_NOTE_HEADING - 1));
+    return "#".repeat(level) + space;
+  });
+}
+
 /** Multi-line notes keep their structure; only the tail is cut. */
 function capNotes(notes: string, cap: number): string {
-  const trimmed = notes.trim();
+  const trimmed = demoteHeadings(notes.trim());
   if (cap === Infinity || trimmed.length <= cap) return trimmed;
   return `${trimmed.slice(0, cap).trimEnd()}\n…[truncated]`;
 }

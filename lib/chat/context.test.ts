@@ -192,3 +192,43 @@ describe("detail tiers", () => {
     expect(out).toContain("Revise virtual memory");
   });
 });
+
+describe("headings inside user notes", () => {
+  const withHeadings: ContextSubject = {
+    id: "s6",
+    title: "OS",
+    milestones: [
+      {
+        title: "Concurrency",
+        isCompleted: false,
+        notes: "## Key topics\n\nText\n\n# Top\n\n#### Already deep\n\n###### Max",
+      },
+    ],
+  };
+
+  it("demotes note headings below the digest's own levels", () => {
+    const out = renderSubject(withHeadings, FULL_DETAIL);
+    // Nothing in a note may compete with `## Subject:` or `### Milestone:`.
+    for (const line of out.split("\n")) {
+      if (line.startsWith("## Subject:") || line.startsWith("### Milestone:")) continue;
+      expect(/^#{1,3}\s/.test(line)).toBe(false);
+    }
+  });
+
+  it("preserves relative heading depth and clamps at h6", () => {
+    const out = renderSubject(withHeadings, FULL_DETAIL);
+    expect(out).toContain("# Top");
+    expect(out).toContain("#### Top");
+    expect(out).toContain("##### Key topics");
+    expect(out).toContain("###### Max");
+    expect(out).not.toContain("####### ");
+  });
+
+  it("leaves a plain note untouched", () => {
+    const out = renderSubject(
+      { id: "s7", title: "X", milestones: [{ title: "M", isCompleted: false, notes: "just text" }] },
+      FULL_DETAIL,
+    );
+    expect(out).toContain("just text");
+  });
+});
