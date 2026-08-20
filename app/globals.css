@@ -459,4 +459,58 @@
   .dark .lk-prose .hljs-variable, .dark .lk-prose .hljs-template-variable { color: #7dcfff; }
   .dark .lk-prose .hljs-meta { color: #7aa2f7; }
   .dark .lk-prose .hljs-deletion { color: var(--destructive); }
+
+  /* ── Chat panel ──────────────────────────────────────────────────────── */
+  .lk-chat-panel {
+    background: var(--background);
+    border-left: var(--lk-bw) solid var(--border);
+  }
+
+  .lk-chat-bubble {
+    border: var(--lk-bw) solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+  .lk-chat-bubble.user {
+    background: var(--muted);
+    /* The asker's turn is the narrower column, so a glance down the thread
+       reads as an alternation without needing avatars or labels. */
+    margin-left: 12%;
+  }
+  .lk-chat-bubble.assistant {
+    background: var(--card);
+    box-shadow: var(--lk-shadow-sm);
+  }
+
+  .lk-chat-composer {
+    background: var(--card);
+    border: var(--lk-bw) solid var(--border);
+    border-radius: var(--radius);
+  }
+  .lk-chat-composer textarea {
+    background: transparent;
+    outline: none;
+    resize: none;
+    width: 100%;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  /* The caret that trails a streaming reply. */
+  .lk-chat-caret {
+    display: inline-block;
+    width: 7px;
+    height: 1em;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    background: var(--accent);
+    animation: lk-chat-blink 1s steps(2, start) infinite;
+  }
+  @keyframes lk-chat-blink { to { visibility: hidden; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lk-chat-caret { animation: none; }
+  }
 }

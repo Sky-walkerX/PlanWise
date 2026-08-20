@@ -38,9 +38,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  subjects  Subject[]
-  tasks     Task[]
-  resources Resource[]
+  subjects      Subject[]
+  tasks         Task[]
+  resources     Resource[]
+  conversations Conversation[]
 }
 
 model Subject {
@@ -55,9 +56,10 @@ model Subject {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
-  milestones Milestone[]
-  resources  Resource[]
-  tasks      Task[]
+  milestones    Milestone[]
+  resources     Resource[]
+  tasks         Task[]
+  conversations Conversation[]
 
   // Postgres does not index foreign keys automatically; every list/detail read
   // filters on them. Composite order mirrors the query's where + orderBy.
@@ -170,4 +172,49 @@ model TimerSession {
   taskId String
 
   @@index([taskId, startedAt])
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}
+
+// A chat thread against the user's own local LLM. The model itself is never
+// reached from the server (it lives on the user's machine) — this row and its
+// messages are the durable record of an exchange the browser transported.
+model Conversation {
+  id        String   @id @default(uuid())
+  title     String   @default("New chat")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  // Where the chat was opened from; drives the panel's default context scope.
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  subjectId String?
+
+  // The context picker's selection. Plain ids rather than a join table: the
+  // assembler re-reads these through a `where: { userId }` filter on every
+  // turn, so foreign-key integrity would buy nothing a stale id doesn't
+  // already survive.
+  contextSubjectIds String[]
+
+  messages ChatMessage[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  role      ChatRole
+  content   String
+  model     String? // which local model produced it; null on user turns
+  createdAt DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+
+  @@index([conversationId, createdAt])
 }

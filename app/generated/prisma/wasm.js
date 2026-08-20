@@ -201,6 +201,25 @@ exports.Prisma.TimerSessionScalarFieldEnum = {
   taskId: 'taskId'
 };
 
+exports.Prisma.ConversationScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId',
+  subjectId: 'subjectId',
+  contextSubjectIds: 'contextSubjectIds'
+};
+
+exports.Prisma.ChatMessageScalarFieldEnum = {
+  id: 'id',
+  role: 'role',
+  content: 'content',
+  model: 'model',
+  createdAt: 'createdAt',
+  conversationId: 'conversationId'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -234,6 +253,11 @@ exports.ResourceType = exports.$Enums.ResourceType = {
   BOOK: 'BOOK'
 };
 
+exports.ChatRole = exports.$Enums.ChatRole = {
+  USER: 'USER',
+  ASSISTANT: 'ASSISTANT'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   Subject: 'Subject',
@@ -241,7 +265,9 @@ exports.Prisma.ModelName = {
   Task: 'Task',
   Subtask: 'Subtask',
   Resource: 'Resource',
-  TimerSession: 'TimerSession'
+  TimerSession: 'TimerSession',
+  Conversation: 'Conversation',
+  ChatMessage: 'ChatMessage'
 };
 
 /**

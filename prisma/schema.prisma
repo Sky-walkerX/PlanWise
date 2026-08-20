@@ -34,30 +34,32 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
-  password  String?  // hashed password
+  password  String? // hashed password
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  subjects  Subject[]
-  tasks     Task[]
-  resources Resource[]
+  subjects      Subject[]
+  tasks         Task[]
+  resources     Resource[]
+  conversations Conversation[]
 }
 
 model Subject {
   id          String   @id @default(uuid())
   title       String
   description String?
-  color       String?  // optional accent color for the subject card
+  color       String? // optional accent color for the subject card
   isArchived  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
-  milestones  Milestone[]
-  resources   Resource[]
-  tasks       Task[]
+  milestones    Milestone[]
+  resources     Resource[]
+  tasks         Task[]
+  conversations Conversation[]
 
   // Postgres does not index foreign keys automatically; every list/detail read
   // filters on them. Composite order mirrors the query's where + orderBy.
@@ -68,42 +70,42 @@ model Milestone {
   id          String   @id @default(uuid())
   title       String
   notes       String   @default("") // markdown
-  order       Int      @default(0)  // manual ordering within a subject
+  order       Int      @default(0) // manual ordering within a subject
   isCompleted Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  subjectId   String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId String
 
-  tasks       Task[]
+  tasks Task[]
 
   @@index([subjectId, order])
 }
 
 model Task {
-  id            String         @id @default(uuid())
+  id            String      @id @default(uuid())
   title         String
-  description   String?        // markdown notes for the task
-  isCompleted   Boolean        @default(false)
+  description   String? // markdown notes for the task
+  isCompleted   Boolean     @default(false)
   completedAt   DateTime?
   dueDate       DateTime?
-  priority      Priority       @default(MEDIUM)
-  estimatedTime Int?           // estimate in minutes
-  timeSpent     Int?           // total actual minutes (updated on timer stop)
-  recurrence    Recurrence?    // null = one-off; otherwise spawns next instance on completion
-  order         Int            @default(0) // manual ordering within its milestone / loose list
-  createdAt     DateTime       @default(now())
+  priority      Priority    @default(MEDIUM)
+  estimatedTime Int? // estimate in minutes
+  timeSpent     Int? // total actual minutes (updated on timer stop)
+  recurrence    Recurrence? // null = one-off; otherwise spawns next instance on completion
+  order         Int         @default(0) // manual ordering within its milestone / loose list
+  createdAt     DateTime    @default(now())
 
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
   // A task always belongs to a subject; a milestone is optional.
-  subject       Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  subjectId     String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId String
 
-  milestone     Milestone?     @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
-  milestoneId   String?
+  milestone   Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  milestoneId String?
 
   subtasks      Subtask[]
   timerSessions TimerSession[]
@@ -124,17 +126,17 @@ model Subtask {
   notes       String    @default("") // markdown
   isCompleted Boolean   @default(false)
   completedAt DateTime?
-  order       Int       @default(0)  // manual ordering within its sibling group (taskId + parentId)
+  order       Int       @default(0) // manual ordering within its sibling group (taskId + parentId)
   createdAt   DateTime  @default(now())
 
-  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  taskId      String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId String
 
   // Self-nesting: a subtask may sit under another subtask of the same task.
   // The UI caps depth at one level (children can't have children).
-  parent      Subtask?  @relation("SubtaskChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  parentId    String?
-  children    Subtask[] @relation("SubtaskChildren")
+  parent   Subtask?  @relation("SubtaskChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId String?
+  children Subtask[] @relation("SubtaskChildren")
 
   // Top-level rows per task (parentId null), and each parent's children.
   @@index([taskId, parentId, order])
@@ -150,10 +152,10 @@ model Resource {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 
-  subject   Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   subjectId String
 
   @@index([subjectId, createdAt(sort: Desc)])
@@ -164,10 +166,55 @@ model TimerSession {
   id        String    @id @default(uuid())
   startedAt DateTime
   endedAt   DateTime?
-  duration  Int?      // in minutes
+  duration  Int? // in minutes
 
-  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  taskId    String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId String
 
   @@index([taskId, startedAt])
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}
+
+// A chat thread against the user's own local LLM. The model itself is never
+// reached from the server (it lives on the user's machine) — this row and its
+// messages are the durable record of an exchange the browser transported.
+model Conversation {
+  id        String   @id @default(uuid())
+  title     String   @default("New chat")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  // Where the chat was opened from; drives the panel's default context scope.
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  subjectId String?
+
+  // The context picker's selection. Plain ids rather than a join table: the
+  // assembler re-reads these through a `where: { userId }` filter on every
+  // turn, so foreign-key integrity would buy nothing a stale id doesn't
+  // already survive.
+  contextSubjectIds String[]
+
+  messages ChatMessage[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  role      ChatRole
+  content   String
+  model     String? // which local model produced it; null on user turns
+  createdAt DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+
+  @@index([conversationId, createdAt])
 }
