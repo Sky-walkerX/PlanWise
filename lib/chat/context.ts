@@ -46,7 +46,7 @@ const MIN_NOTE_HEADING = 4;
  * notes to the next. Demoting preserves the user's own structure while keeping
  * the digest's outline intact.
  */
-function demoteHeadings(markdown: string): string {
+export function demoteHeadings(markdown: string): string {
   return markdown.replace(/^(#{1,6})(\s)/gm, (_match, hashes: string, space: string) => {
     const level = Math.min(6, Math.max(MIN_NOTE_HEADING, hashes.length + MIN_NOTE_HEADING - 1));
     return "#".repeat(level) + space;
@@ -167,4 +167,40 @@ export function buildDigest(subjects: ContextSubject[], options: DigestOptions):
   if (subjects.length === 0) return "";
   const sections = subjects.map((s) => renderSubject(s, options));
   return ["# Study context", ...sections].join("\n\n");
+}
+
+/**
+ * The compact breadth view used as retrieval mode's skeleton (§4.3 of the RAG
+ * design). Bullets rather than a heading per level, and note bodies omitted
+ * entirely — they're what the retrieved passages supply. Completed tasks
+ * collapse into the milestone's progress count rather than listing each one,
+ * since "what's left" is what a planning question needs, not a full ledger.
+ */
+function renderOutlineMilestone(milestone: ContextMilestone): string[] {
+  const tasks = milestone.tasks ?? [];
+  const done = tasks.filter((t) => t.isCompleted).length;
+  const progress = tasks.length > 0 ? ` — ${done}/${tasks.length} done` : milestone.isCompleted ? " — done" : "";
+  const lines = [`- ${milestone.title}${progress}`];
+  for (const task of tasks) {
+    if (!task.isCompleted) lines.push(`  - [ ] ${task.title}`);
+  }
+  return lines;
+}
+
+function renderOutlineSubject(subject: ContextSubject): string[] {
+  const lines = [`### ${subject.title}`];
+  for (const milestone of subject.milestones ?? []) {
+    lines.push(...renderOutlineMilestone(milestone));
+  }
+  for (const task of (subject.tasks ?? []).filter((t) => !t.isCompleted)) {
+    lines.push(`- [ ] ${task.title}`);
+  }
+  return lines;
+}
+
+/** Empty selection yields an empty string, matching `buildDigest`. */
+export function buildOutline(subjects: ContextSubject[]): string {
+  if (subjects.length === 0) return "";
+  const lines = subjects.flatMap((s) => renderOutlineSubject(s));
+  return ["## Plan outline", ...lines].join("\n");
 }
