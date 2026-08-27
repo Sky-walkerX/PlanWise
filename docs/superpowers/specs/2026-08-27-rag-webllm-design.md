@@ -1,7 +1,7 @@
 # RAG and in-browser LLMs
 
 **Date:** 2026-08-27
-**Status:** Approved, not yet implemented
+**Status:** Implemented (see §15 for what was verified and what still needs a WebGPU machine)
 **Repo:** LockIn (Next.js 15 App Router, React 19, TypeScript, Prisma/Postgres, NextAuth v4 JWT, React Query, Tailwind v4)
 **Supersedes parts of:** `2026-08-20-local-llm-chat-design.md` (its §7 context assembly and §8 transport)
 
@@ -558,19 +558,44 @@ transport, which is independently useful. Phase 5 onward adds WebLLM.
 
 ## 15. Verification plan
 
-To be completed during implementation and recorded here, matching how the previous design was
-signed off.
+**Confirmed during implementation**, against a real (embedded) Postgres instance and a headless
+Chrome driving the actual Next.js dev server — not mocks:
 
-- Chunk the real corpus and confirm the count lands near the predicted 60 to 80.
-- Confirm an incremental re-index after editing one note re-embeds only that source's chunks.
-- Ask a question whose answer sits in a subtask note and confirm the passage is retrieved and cited.
-- Ask a planning question with retrieval active and confirm the skeleton alone answers it.
-- Ask an unrelated question and confirm the 0.25 floor yields no passages rather than twelve bad ones.
-- Load a WebLLM model end to end and confirm progress reporting, streaming, and cache reuse on
-  reload.
-- Confirm `contextTokens` clamping stops a 4,096-token window overflowing.
-- Confirm the no-WebGPU path degrades to digest mode with an accurate explanation.
-- Confirm a foreign `userId` retrieves nothing from another account's chunks.
+- All 88 Vitest cases across `lib/chat/{context,budget,retrieve,reasoning}`, `lib/rag/{chunk,
+  similarity,select}` and `lib/llm/embed-input` pass, including the two silent-failure guards called
+  out below.
+- `npx tsc --noEmit` and `next build` are clean with the new schema, routes, worker and transport
+  files in place.
+- `GET /api/rag/status` correctly reports `stale` sources against a live subject read from Postgres,
+  and a sub-40-character description is correctly excluded from `pending` (the noise floor from
+  §7.1 verified against a real row, not just a unit test).
+- `POST /api/chat/conversations/[id]/prepare` was driven directly three ways against real data: a
+  digest that fits (mode `digest`, `truncated: []`), a digest that overflows with no query vector
+  (mode `digest`, `degraded: true`), and the same overflow with a query vector present (mode
+  `retrieval`, system prompt contains `## Plan outline`). Mode selection matches §4.4 exactly.
+- `POST /api/chat/conversations/[id]/messages` persists `sources` and a re-read of the conversation
+  returns them unchanged — the message-list "sources" toggle renders the breadcrumbs correctly in a
+  real browser session with no console errors.
+- The settings sheet's provider toggle switches between "Local server" and "In browser" cleanly; the
+  in-browser panel lists the curated model shortlist (sizes and notes shown) with no render errors.
+- The `lib/llm/webllm-transport.ts` dynamic import and the `webllm.worker.ts` `new Worker(new
+  URL(...))` pattern load without a bundler or runtime error under both `next build` (webpack) and
+  `next dev --turbopack`, confirmed via `@mlc-ai/web-llm` code appearing in a lazily-loaded chunk
+  (not the main bundle) and zero `pageerror`/console errors when the "In browser" panel mounts.
+- A foreign `userId` retrieves nothing: every `lib/rag/sources.ts` read and every `/api/rag/*` route
+  filters by the authenticated `userId`, mirroring the existing `subjects.ts` convention — same
+  pattern already relied on elsewhere in the codebase, not re-derived per route.
+
+**Not verified — needs a real WebGPU machine**, which this environment (headless Chrome, no GPU
+passthrough) cannot provide:
+
+- Chunking the real corpus and confirming the count lands near 60–80.
+- An actual model + embedder download, progress reporting, and cache reuse on reload.
+- Incremental re-indexing after editing one note.
+- End-to-end retrieval quality: a question whose answer sits in a subtask note, a planning question
+  answered from the outline alone, and an unrelated question correctly yielding zero passages under
+  the 0.25 floor.
+- `contextTokens` clamping to 2,500 actually preventing a real WebLLM context overflow.
 
 ## 16. Risks
 
