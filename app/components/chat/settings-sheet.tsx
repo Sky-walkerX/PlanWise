@@ -298,6 +298,7 @@ function WebllmSettings({
   set: <K extends keyof LlmSettings>(key: K, value: LlmSettings[K]) => void;
 }) {
   const [webGpuAvailable, setWebGpuAvailable] = useState<boolean | null>(null);
+  const [webGpuReason, setWebGpuReason] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [allModels, setAllModels] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -307,8 +308,14 @@ function WebllmSettings({
 
   useEffect(() => {
     let cancelled = false;
-    import("@/lib/llm/webllm-transport").then(({ hasWebGPU }) => {
-      if (!cancelled) setWebGpuAvailable(hasWebGPU());
+    import("@/lib/llm/webllm-transport").then(async ({ checkWebGPU }) => {
+      const res = await checkWebGPU();
+      if (!cancelled) {
+        setWebGpuAvailable(res.available);
+        if (!res.available && res.reason) {
+          setWebGpuReason(res.reason);
+        }
+      }
     });
     return () => {
       cancelled = true;
@@ -333,7 +340,14 @@ function WebllmSettings({
       );
       setResult({ ok: true, message: "Model loaded and cached — ready to chat." });
     } catch (error) {
-      setResult({ ok: false, message: error instanceof Error ? error.message : "Failed to load the model." });
+      console.error("Failed to load WebLLM model:", error);
+      const message =
+        typeof error === "string"
+          ? error
+          : error instanceof Error
+            ? error.message
+            : String(error || "Failed to load the model.");
+      setResult({ ok: false, message });
     } finally {
       setLoading(false);
     }
@@ -350,8 +364,8 @@ function WebllmSettings({
     return (
       <div className="lk-card p-3">
         <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-          This browser has no WebGPU, so an in-browser model can&apos;t run here. Use a local server instead, or
-          switch to a browser with WebGPU support (recent Chrome or Edge).
+          {webGpuReason ||
+            "This browser has no WebGPU, so an in-browser model can't run here. Use a local server instead, or switch to a browser with WebGPU support (recent Chrome or Edge)."}
         </p>
       </div>
     );

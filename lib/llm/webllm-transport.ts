@@ -27,7 +27,36 @@ const EMBED_BATCH_SIZE = 4;
 export type Progress = InitProgressReport;
 
 export function hasWebGPU(): boolean {
-  return typeof navigator !== "undefined" && "gpu" in navigator;
+  return typeof navigator !== "undefined" && "gpu" in navigator && !!navigator.gpu;
+}
+
+export async function checkWebGPU(): Promise<{ available: boolean; reason?: string }> {
+  if (typeof navigator === "undefined" || !("gpu" in navigator)) {
+    return {
+      available: false,
+      reason: "This browser has no WebGPU support. Use a local server instead, or switch to a browser with WebGPU support (recent Chrome or Edge).",
+    };
+  }
+  try {
+    const gpu = (navigator as unknown as { gpu?: { requestAdapter: () => Promise<unknown> } }).gpu;
+    if (!gpu || typeof gpu.requestAdapter !== "function") {
+      return {
+        available: false,
+        reason: "This browser does not expose the WebGPU API. Use a local server instead.",
+      };
+    }
+    const adapter = await gpu.requestAdapter();
+    if (!adapter) {
+      return {
+        available: false,
+        reason: "No compatible GPU or WebGPU adapter found on this machine. Use a local server instead.",
+      };
+    }
+    return { available: true };
+  } catch (err) {
+    const reason = typeof err === "string" ? err : err instanceof Error ? err.message : String(err);
+    return { available: false, reason };
+  }
 }
 
 /** Model ids web-llm can run for chat — the embedder is excluded, since it's
@@ -41,6 +70,12 @@ export function listWebllmChatModels(): string[] {
 let enginePromise: Promise<WebWorkerMLCEngine> | null = null;
 let loadedChatModel: string | null = null;
 
+function normalizeError(err: unknown): Error {
+  if (err instanceof Error) return err;
+  if (typeof err === "string") return new Error(err);
+  return new Error(String(err || "Failed to load the model."));
+}
+
 /**
  * The shared engine. Reloading with a different chat model tears down and
  * reloads both models that live in it, since web-llm loads a fixed model
@@ -50,12 +85,22 @@ function getEngine(chatModel: string, onProgress?: (report: Progress) => void): 
   if (enginePromise && loadedChatModel === chatModel) return enginePromise;
 
   loadedChatModel = chatModel;
-  enginePromise = (async () => {
-    const worker = new Worker(new URL("./webllm.worker.ts", import.meta.url), { type: "module" });
-    return CreateWebWorkerMLCEngine(worker, [chatModel, EMBEDDING_MODEL], {
-      initProgressCallback: onProgress,
-    });
-  })();
+  enginePromise = new Promise<WebWorkerMLCEngine>((resolve, reject) => {
+    try {
+      const worker = new Worker(new URL("./webllm.worker.ts", import.meta.url), { type: "module" });
+      worker.onerror = (event) => {
+        const message = event.message || "Failed to initialize WebWorker for WebLLM.";
+        reject(new Error(message));
+      };
+      CreateWebWorkerMLCEngine(worker, [chatModel, EMBEDDING_MODEL], {
+        initProgressCallback: onProgress,
+      })
+        .then(resolve)
+        .catch((err) => reject(normalizeError(err)));
+    } catch (err) {
+      reject(normalizeError(err));
+    }
+  });
   enginePromise.catch(() => {
     // A failed load shouldn't wedge the singleton — the next call retries.
     enginePromise = null;

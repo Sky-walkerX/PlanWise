@@ -138,7 +138,13 @@ export function useSendMessage() {
         if (!aborted) {
           // Nothing is persisted on failure, so the thread ends on the user's
           // question — which `prepare` recognises as a retry.
-          setError(err instanceof LlmError || err instanceof Error ? err.message : "Something went wrong.");
+          setError(
+            err instanceof LlmError || err instanceof Error
+              ? err.message
+              : typeof err === "string"
+                ? err
+                : "Something went wrong.",
+          );
           setIsStreaming(false);
           setStreamText("");
           return;
@@ -203,8 +209,9 @@ export function useIndexing(settings: LlmSettings) {
 
   useEffect(() => {
     let cancelled = false;
-    import("@/lib/llm/webllm-transport").then(({ hasWebGPU }) => {
-      if (!cancelled) setWebGpuAvailable(hasWebGPU());
+    import("@/lib/llm/webllm-transport").then(async ({ checkWebGPU }) => {
+      const { available } = await checkWebGPU();
+      if (!cancelled) setWebGpuAvailable(available);
     });
     return () => {
       cancelled = true;
