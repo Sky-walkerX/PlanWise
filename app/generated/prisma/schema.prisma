@@ -42,6 +42,7 @@ model User {
   tasks         Task[]
   resources     Resource[]
   conversations Conversation[]
+  noteChunks    NoteChunk[]
 }
 
 model Subject {
@@ -60,6 +61,7 @@ model Subject {
   resources     Resource[]
   tasks         Task[]
   conversations Conversation[]
+  noteChunks    NoteChunk[]
 
   // Postgres does not index foreign keys automatically; every list/detail read
   // filters on them. Composite order mirrors the query's where + orderBy.
@@ -213,8 +215,67 @@ model ChatMessage {
   model     String? // which local model produced it; null on user turns
   createdAt DateTime @default(now())
 
+  // Breadcrumbs of the passages retrieved for this reply. Empty on user turns
+  // and on digest-mode replies.
+  sources String[]
+
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   conversationId String
 
   @@index([conversationId, createdAt])
+}
+
+enum ChunkSource {
+  SUBJECT
+  MILESTONE
+  TASK
+  SUBTASK
+  RESOURCE
+}
+
+// One embedded passage of a user's own notes. Rows are derived data: they can
+// be deleted wholesale and rebuilt from the source records at any time.
+model NoteChunk {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  // Retrieval filters by subject when the picker has a selection, and the FK
+  // cascade cleans up chunks when a subject is deleted.
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectId String
+
+  // Polymorphic parent. Not a foreign key: five source tables would need five
+  // nullable columns for no gain, since a sweep already reconciles against the
+  // live source set on every status check.
+  source   ChunkSource
+  sourceId String
+  ordinal  Int
+
+  // "Operating Systems > Memory management > Read Ch. 8". Prepended to the text
+  // before embedding, and shown to the user as the citation.
+  breadcrumb String
+  content    String
+
+  // sha256 of the source record's full text. Re-chunking is skipped when it
+  // matches, which is what keeps indexing incremental.
+  contentHash String
+
+  // Normalised at write time, so scoring is a dot product rather than a cosine.
+  embedding      Float[]
+  embeddingModel String
+  dims           Int
+
+  createdAt DateTime @default(now())
+
+  // Identifies a row within its source. Re-indexing deletes every row for a
+  // source and reinserts, rather than upserting per ordinal: edited text often
+  // chunks into fewer pieces than before, and upserting would leave the surplus
+  // high-ordinal rows behind as stale passages that still score and still get
+  // retrieved.
+  @@unique([source, sourceId, ordinal])
+  @@index([userId, subjectId])
+  // A model change invalidates every vector; this finds them.
+  @@index([userId, embeddingModel])
 }

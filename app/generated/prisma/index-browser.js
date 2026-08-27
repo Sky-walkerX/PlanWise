@@ -217,7 +217,24 @@ exports.Prisma.ChatMessageScalarFieldEnum = {
   content: 'content',
   model: 'model',
   createdAt: 'createdAt',
+  sources: 'sources',
   conversationId: 'conversationId'
+};
+
+exports.Prisma.NoteChunkScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  subjectId: 'subjectId',
+  source: 'source',
+  sourceId: 'sourceId',
+  ordinal: 'ordinal',
+  breadcrumb: 'breadcrumb',
+  content: 'content',
+  contentHash: 'contentHash',
+  embedding: 'embedding',
+  embeddingModel: 'embeddingModel',
+  dims: 'dims',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -258,6 +275,14 @@ exports.ChatRole = exports.$Enums.ChatRole = {
   ASSISTANT: 'ASSISTANT'
 };
 
+exports.ChunkSource = exports.$Enums.ChunkSource = {
+  SUBJECT: 'SUBJECT',
+  MILESTONE: 'MILESTONE',
+  TASK: 'TASK',
+  SUBTASK: 'SUBTASK',
+  RESOURCE: 'RESOURCE'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   Subject: 'Subject',
@@ -267,7 +292,8 @@ exports.Prisma.ModelName = {
   Resource: 'Resource',
   TimerSession: 'TimerSession',
   Conversation: 'Conversation',
-  ChatMessage: 'ChatMessage'
+  ChatMessage: 'ChatMessage',
+  NoteChunk: 'NoteChunk'
 };
 
 /**

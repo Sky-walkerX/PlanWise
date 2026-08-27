@@ -58,6 +58,11 @@ export type Conversation = $Result.DefaultSelection<Prisma.$ConversationPayload>
  * 
  */
 export type ChatMessage = $Result.DefaultSelection<Prisma.$ChatMessagePayload>
+/**
+ * Model NoteChunk
+ * 
+ */
+export type NoteChunk = $Result.DefaultSelection<Prisma.$NoteChunkPayload>
 
 /**
  * Enums
@@ -98,6 +103,17 @@ export const ChatRole: {
 
 export type ChatRole = (typeof ChatRole)[keyof typeof ChatRole]
 
+
+export const ChunkSource: {
+  SUBJECT: 'SUBJECT',
+  MILESTONE: 'MILESTONE',
+  TASK: 'TASK',
+  SUBTASK: 'SUBTASK',
+  RESOURCE: 'RESOURCE'
+};
+
+export type ChunkSource = (typeof ChunkSource)[keyof typeof ChunkSource]
+
 }
 
 export type Priority = $Enums.Priority
@@ -115,6 +131,10 @@ export const Recurrence: typeof $Enums.Recurrence
 export type ChatRole = $Enums.ChatRole
 
 export const ChatRole: typeof $Enums.ChatRole
+
+export type ChunkSource = $Enums.ChunkSource
+
+export const ChunkSource: typeof $Enums.ChunkSource
 
 /**
  * ##  Prisma Client ʲˢ
@@ -330,6 +350,16 @@ export class PrismaClient<
     * ```
     */
   get chatMessage(): Prisma.ChatMessageDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.noteChunk`: Exposes CRUD operations for the **NoteChunk** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more NoteChunks
+    * const noteChunks = await prisma.noteChunk.findMany()
+    * ```
+    */
+  get noteChunk(): Prisma.NoteChunkDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -778,7 +808,8 @@ export namespace Prisma {
     Resource: 'Resource',
     TimerSession: 'TimerSession',
     Conversation: 'Conversation',
-    ChatMessage: 'ChatMessage'
+    ChatMessage: 'ChatMessage',
+    NoteChunk: 'NoteChunk'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -797,7 +828,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "subject" | "milestone" | "task" | "subtask" | "resource" | "timerSession" | "conversation" | "chatMessage"
+      modelProps: "user" | "subject" | "milestone" | "task" | "subtask" | "resource" | "timerSession" | "conversation" | "chatMessage" | "noteChunk"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1467,6 +1498,80 @@ export namespace Prisma {
           }
         }
       }
+      NoteChunk: {
+        payload: Prisma.$NoteChunkPayload<ExtArgs>
+        fields: Prisma.NoteChunkFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NoteChunkFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteChunkPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NoteChunkFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteChunkPayload>
+          }
+          findFirst: {
+            args: Prisma.NoteChunkFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteChunkPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NoteChunkFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteChunkPayload>
+          }
+          findMany: {
+            args: Prisma.NoteChunkFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteChunkPayload>[]
+          }
+          create: {
+            args: Prisma.NoteChunkCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteChunkPayload>
+          }
+          createMany: {
+            args: Prisma.NoteChunkCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NoteChunkCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteChunkPayload>[]
+          }
+          delete: {
+            args: Prisma.NoteChunkDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteChunkPayload>
+          }
+          update: {
+            args: Prisma.NoteChunkUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteChunkPayload>
+          }
+          deleteMany: {
+            args: Prisma.NoteChunkDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NoteChunkUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.NoteChunkUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteChunkPayload>[]
+          }
+          upsert: {
+            args: Prisma.NoteChunkUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoteChunkPayload>
+          }
+          aggregate: {
+            args: Prisma.NoteChunkAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNoteChunk>
+          }
+          groupBy: {
+            args: Prisma.NoteChunkGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NoteChunkGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NoteChunkCountArgs<ExtArgs>
+            result: $Utils.Optional<NoteChunkCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1560,6 +1665,7 @@ export namespace Prisma {
     timerSession?: TimerSessionOmit
     conversation?: ConversationOmit
     chatMessage?: ChatMessageOmit
+    noteChunk?: NoteChunkOmit
   }
 
   /* Types for Logging */
@@ -1658,6 +1764,7 @@ export namespace Prisma {
     tasks: number
     resources: number
     conversations: number
+    noteChunks: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -1665,6 +1772,7 @@ export namespace Prisma {
     tasks?: boolean | UserCountOutputTypeCountTasksArgs
     resources?: boolean | UserCountOutputTypeCountResourcesArgs
     conversations?: boolean | UserCountOutputTypeCountConversationsArgs
+    noteChunks?: boolean | UserCountOutputTypeCountNoteChunksArgs
   }
 
   // Custom InputTypes
@@ -1706,6 +1814,13 @@ export namespace Prisma {
     where?: ConversationWhereInput
   }
 
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountNoteChunksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NoteChunkWhereInput
+  }
+
 
   /**
    * Count Type SubjectCountOutputType
@@ -1716,6 +1831,7 @@ export namespace Prisma {
     resources: number
     tasks: number
     conversations: number
+    noteChunks: number
   }
 
   export type SubjectCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -1723,6 +1839,7 @@ export namespace Prisma {
     resources?: boolean | SubjectCountOutputTypeCountResourcesArgs
     tasks?: boolean | SubjectCountOutputTypeCountTasksArgs
     conversations?: boolean | SubjectCountOutputTypeCountConversationsArgs
+    noteChunks?: boolean | SubjectCountOutputTypeCountNoteChunksArgs
   }
 
   // Custom InputTypes
@@ -1762,6 +1879,13 @@ export namespace Prisma {
    */
   export type SubjectCountOutputTypeCountConversationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ConversationWhereInput
+  }
+
+  /**
+   * SubjectCountOutputType without action
+   */
+  export type SubjectCountOutputTypeCountNoteChunksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NoteChunkWhereInput
   }
 
 
@@ -2078,6 +2202,7 @@ export namespace Prisma {
     tasks?: boolean | User$tasksArgs<ExtArgs>
     resources?: boolean | User$resourcesArgs<ExtArgs>
     conversations?: boolean | User$conversationsArgs<ExtArgs>
+    noteChunks?: boolean | User$noteChunksArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -2114,6 +2239,7 @@ export namespace Prisma {
     tasks?: boolean | User$tasksArgs<ExtArgs>
     resources?: boolean | User$resourcesArgs<ExtArgs>
     conversations?: boolean | User$conversationsArgs<ExtArgs>
+    noteChunks?: boolean | User$noteChunksArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -2126,6 +2252,7 @@ export namespace Prisma {
       tasks: Prisma.$TaskPayload<ExtArgs>[]
       resources: Prisma.$ResourcePayload<ExtArgs>[]
       conversations: Prisma.$ConversationPayload<ExtArgs>[]
+      noteChunks: Prisma.$NoteChunkPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -2532,6 +2659,7 @@ export namespace Prisma {
     tasks<T extends User$tasksArgs<ExtArgs> = {}>(args?: Subset<T, User$tasksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     resources<T extends User$resourcesArgs<ExtArgs> = {}>(args?: Subset<T, User$resourcesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ResourcePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     conversations<T extends User$conversationsArgs<ExtArgs> = {}>(args?: Subset<T, User$conversationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    noteChunks<T extends User$noteChunksArgs<ExtArgs> = {}>(args?: Subset<T, User$noteChunksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3051,6 +3179,30 @@ export namespace Prisma {
   }
 
   /**
+   * User.noteChunks
+   */
+  export type User$noteChunksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+    where?: NoteChunkWhereInput
+    orderBy?: NoteChunkOrderByWithRelationInput | NoteChunkOrderByWithRelationInput[]
+    cursor?: NoteChunkWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: NoteChunkScalarFieldEnum | NoteChunkScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3262,6 +3414,7 @@ export namespace Prisma {
     resources?: boolean | Subject$resourcesArgs<ExtArgs>
     tasks?: boolean | Subject$tasksArgs<ExtArgs>
     conversations?: boolean | Subject$conversationsArgs<ExtArgs>
+    noteChunks?: boolean | Subject$noteChunksArgs<ExtArgs>
     _count?: boolean | SubjectCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["subject"]>
 
@@ -3307,6 +3460,7 @@ export namespace Prisma {
     resources?: boolean | Subject$resourcesArgs<ExtArgs>
     tasks?: boolean | Subject$tasksArgs<ExtArgs>
     conversations?: boolean | Subject$conversationsArgs<ExtArgs>
+    noteChunks?: boolean | Subject$noteChunksArgs<ExtArgs>
     _count?: boolean | SubjectCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type SubjectIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3324,6 +3478,7 @@ export namespace Prisma {
       resources: Prisma.$ResourcePayload<ExtArgs>[]
       tasks: Prisma.$TaskPayload<ExtArgs>[]
       conversations: Prisma.$ConversationPayload<ExtArgs>[]
+      noteChunks: Prisma.$NoteChunkPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -3733,6 +3888,7 @@ export namespace Prisma {
     resources<T extends Subject$resourcesArgs<ExtArgs> = {}>(args?: Subset<T, Subject$resourcesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ResourcePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tasks<T extends Subject$tasksArgs<ExtArgs> = {}>(args?: Subset<T, Subject$tasksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     conversations<T extends Subject$conversationsArgs<ExtArgs> = {}>(args?: Subset<T, Subject$conversationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    noteChunks<T extends Subject$noteChunksArgs<ExtArgs> = {}>(args?: Subset<T, Subject$noteChunksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4259,6 +4415,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ConversationScalarFieldEnum | ConversationScalarFieldEnum[]
+  }
+
+  /**
+   * Subject.noteChunks
+   */
+  export type Subject$noteChunksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+    where?: NoteChunkWhereInput
+    orderBy?: NoteChunkOrderByWithRelationInput | NoteChunkOrderByWithRelationInput[]
+    cursor?: NoteChunkWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: NoteChunkScalarFieldEnum | NoteChunkScalarFieldEnum[]
   }
 
   /**
@@ -11346,6 +11526,7 @@ export namespace Prisma {
     content: number
     model: number
     createdAt: number
+    sources: number
     conversationId: number
     _all: number
   }
@@ -11375,6 +11556,7 @@ export namespace Prisma {
     content?: true
     model?: true
     createdAt?: true
+    sources?: true
     conversationId?: true
     _all?: true
   }
@@ -11457,6 +11639,7 @@ export namespace Prisma {
     content: string
     model: string | null
     createdAt: Date
+    sources: string[]
     conversationId: string
     _count: ChatMessageCountAggregateOutputType | null
     _min: ChatMessageMinAggregateOutputType | null
@@ -11483,6 +11666,7 @@ export namespace Prisma {
     content?: boolean
     model?: boolean
     createdAt?: boolean
+    sources?: boolean
     conversationId?: boolean
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["chatMessage"]>
@@ -11493,6 +11677,7 @@ export namespace Prisma {
     content?: boolean
     model?: boolean
     createdAt?: boolean
+    sources?: boolean
     conversationId?: boolean
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["chatMessage"]>
@@ -11503,6 +11688,7 @@ export namespace Prisma {
     content?: boolean
     model?: boolean
     createdAt?: boolean
+    sources?: boolean
     conversationId?: boolean
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["chatMessage"]>
@@ -11513,10 +11699,11 @@ export namespace Prisma {
     content?: boolean
     model?: boolean
     createdAt?: boolean
+    sources?: boolean
     conversationId?: boolean
   }
 
-  export type ChatMessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "role" | "content" | "model" | "createdAt" | "conversationId", ExtArgs["result"]["chatMessage"]>
+  export type ChatMessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "role" | "content" | "model" | "createdAt" | "sources" | "conversationId", ExtArgs["result"]["chatMessage"]>
   export type ChatMessageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
   }
@@ -11538,6 +11725,7 @@ export namespace Prisma {
       content: string
       model: string | null
       createdAt: Date
+      sources: string[]
       conversationId: string
     }, ExtArgs["result"]["chatMessage"]>
     composites: {}
@@ -11968,6 +12156,7 @@ export namespace Prisma {
     readonly content: FieldRef<"ChatMessage", 'String'>
     readonly model: FieldRef<"ChatMessage", 'String'>
     readonly createdAt: FieldRef<"ChatMessage", 'DateTime'>
+    readonly sources: FieldRef<"ChatMessage", 'String[]'>
     readonly conversationId: FieldRef<"ChatMessage", 'String'>
   }
     
@@ -12384,6 +12573,1214 @@ export namespace Prisma {
 
 
   /**
+   * Model NoteChunk
+   */
+
+  export type AggregateNoteChunk = {
+    _count: NoteChunkCountAggregateOutputType | null
+    _avg: NoteChunkAvgAggregateOutputType | null
+    _sum: NoteChunkSumAggregateOutputType | null
+    _min: NoteChunkMinAggregateOutputType | null
+    _max: NoteChunkMaxAggregateOutputType | null
+  }
+
+  export type NoteChunkAvgAggregateOutputType = {
+    ordinal: number | null
+    embedding: number | null
+    dims: number | null
+  }
+
+  export type NoteChunkSumAggregateOutputType = {
+    ordinal: number | null
+    embedding: number[]
+    dims: number | null
+  }
+
+  export type NoteChunkMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    subjectId: string | null
+    source: $Enums.ChunkSource | null
+    sourceId: string | null
+    ordinal: number | null
+    breadcrumb: string | null
+    content: string | null
+    contentHash: string | null
+    embeddingModel: string | null
+    dims: number | null
+    createdAt: Date | null
+  }
+
+  export type NoteChunkMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    subjectId: string | null
+    source: $Enums.ChunkSource | null
+    sourceId: string | null
+    ordinal: number | null
+    breadcrumb: string | null
+    content: string | null
+    contentHash: string | null
+    embeddingModel: string | null
+    dims: number | null
+    createdAt: Date | null
+  }
+
+  export type NoteChunkCountAggregateOutputType = {
+    id: number
+    userId: number
+    subjectId: number
+    source: number
+    sourceId: number
+    ordinal: number
+    breadcrumb: number
+    content: number
+    contentHash: number
+    embedding: number
+    embeddingModel: number
+    dims: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type NoteChunkAvgAggregateInputType = {
+    ordinal?: true
+    embedding?: true
+    dims?: true
+  }
+
+  export type NoteChunkSumAggregateInputType = {
+    ordinal?: true
+    embedding?: true
+    dims?: true
+  }
+
+  export type NoteChunkMinAggregateInputType = {
+    id?: true
+    userId?: true
+    subjectId?: true
+    source?: true
+    sourceId?: true
+    ordinal?: true
+    breadcrumb?: true
+    content?: true
+    contentHash?: true
+    embeddingModel?: true
+    dims?: true
+    createdAt?: true
+  }
+
+  export type NoteChunkMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    subjectId?: true
+    source?: true
+    sourceId?: true
+    ordinal?: true
+    breadcrumb?: true
+    content?: true
+    contentHash?: true
+    embeddingModel?: true
+    dims?: true
+    createdAt?: true
+  }
+
+  export type NoteChunkCountAggregateInputType = {
+    id?: true
+    userId?: true
+    subjectId?: true
+    source?: true
+    sourceId?: true
+    ordinal?: true
+    breadcrumb?: true
+    content?: true
+    contentHash?: true
+    embedding?: true
+    embeddingModel?: true
+    dims?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type NoteChunkAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NoteChunk to aggregate.
+     */
+    where?: NoteChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoteChunks to fetch.
+     */
+    orderBy?: NoteChunkOrderByWithRelationInput | NoteChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NoteChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoteChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoteChunks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned NoteChunks
+    **/
+    _count?: true | NoteChunkCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: NoteChunkAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: NoteChunkSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NoteChunkMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NoteChunkMaxAggregateInputType
+  }
+
+  export type GetNoteChunkAggregateType<T extends NoteChunkAggregateArgs> = {
+        [P in keyof T & keyof AggregateNoteChunk]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNoteChunk[P]>
+      : GetScalarType<T[P], AggregateNoteChunk[P]>
+  }
+
+
+
+
+  export type NoteChunkGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NoteChunkWhereInput
+    orderBy?: NoteChunkOrderByWithAggregationInput | NoteChunkOrderByWithAggregationInput[]
+    by: NoteChunkScalarFieldEnum[] | NoteChunkScalarFieldEnum
+    having?: NoteChunkScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NoteChunkCountAggregateInputType | true
+    _avg?: NoteChunkAvgAggregateInputType
+    _sum?: NoteChunkSumAggregateInputType
+    _min?: NoteChunkMinAggregateInputType
+    _max?: NoteChunkMaxAggregateInputType
+  }
+
+  export type NoteChunkGroupByOutputType = {
+    id: string
+    userId: string
+    subjectId: string
+    source: $Enums.ChunkSource
+    sourceId: string
+    ordinal: number
+    breadcrumb: string
+    content: string
+    contentHash: string
+    embedding: number[]
+    embeddingModel: string
+    dims: number
+    createdAt: Date
+    _count: NoteChunkCountAggregateOutputType | null
+    _avg: NoteChunkAvgAggregateOutputType | null
+    _sum: NoteChunkSumAggregateOutputType | null
+    _min: NoteChunkMinAggregateOutputType | null
+    _max: NoteChunkMaxAggregateOutputType | null
+  }
+
+  type GetNoteChunkGroupByPayload<T extends NoteChunkGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NoteChunkGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NoteChunkGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NoteChunkGroupByOutputType[P]>
+            : GetScalarType<T[P], NoteChunkGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NoteChunkSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    subjectId?: boolean
+    source?: boolean
+    sourceId?: boolean
+    ordinal?: boolean
+    breadcrumb?: boolean
+    content?: boolean
+    contentHash?: boolean
+    embedding?: boolean
+    embeddingModel?: boolean
+    dims?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    subject?: boolean | SubjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["noteChunk"]>
+
+  export type NoteChunkSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    subjectId?: boolean
+    source?: boolean
+    sourceId?: boolean
+    ordinal?: boolean
+    breadcrumb?: boolean
+    content?: boolean
+    contentHash?: boolean
+    embedding?: boolean
+    embeddingModel?: boolean
+    dims?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    subject?: boolean | SubjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["noteChunk"]>
+
+  export type NoteChunkSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    subjectId?: boolean
+    source?: boolean
+    sourceId?: boolean
+    ordinal?: boolean
+    breadcrumb?: boolean
+    content?: boolean
+    contentHash?: boolean
+    embedding?: boolean
+    embeddingModel?: boolean
+    dims?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    subject?: boolean | SubjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["noteChunk"]>
+
+  export type NoteChunkSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    subjectId?: boolean
+    source?: boolean
+    sourceId?: boolean
+    ordinal?: boolean
+    breadcrumb?: boolean
+    content?: boolean
+    contentHash?: boolean
+    embedding?: boolean
+    embeddingModel?: boolean
+    dims?: boolean
+    createdAt?: boolean
+  }
+
+  export type NoteChunkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "subjectId" | "source" | "sourceId" | "ordinal" | "breadcrumb" | "content" | "contentHash" | "embedding" | "embeddingModel" | "dims" | "createdAt", ExtArgs["result"]["noteChunk"]>
+  export type NoteChunkInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    subject?: boolean | SubjectDefaultArgs<ExtArgs>
+  }
+  export type NoteChunkIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    subject?: boolean | SubjectDefaultArgs<ExtArgs>
+  }
+  export type NoteChunkIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    subject?: boolean | SubjectDefaultArgs<ExtArgs>
+  }
+
+  export type $NoteChunkPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "NoteChunk"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+      subject: Prisma.$SubjectPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      subjectId: string
+      source: $Enums.ChunkSource
+      sourceId: string
+      ordinal: number
+      breadcrumb: string
+      content: string
+      contentHash: string
+      embedding: number[]
+      embeddingModel: string
+      dims: number
+      createdAt: Date
+    }, ExtArgs["result"]["noteChunk"]>
+    composites: {}
+  }
+
+  type NoteChunkGetPayload<S extends boolean | null | undefined | NoteChunkDefaultArgs> = $Result.GetResult<Prisma.$NoteChunkPayload, S>
+
+  type NoteChunkCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<NoteChunkFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: NoteChunkCountAggregateInputType | true
+    }
+
+  export interface NoteChunkDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['NoteChunk'], meta: { name: 'NoteChunk' } }
+    /**
+     * Find zero or one NoteChunk that matches the filter.
+     * @param {NoteChunkFindUniqueArgs} args - Arguments to find a NoteChunk
+     * @example
+     * // Get one NoteChunk
+     * const noteChunk = await prisma.noteChunk.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NoteChunkFindUniqueArgs>(args: SelectSubset<T, NoteChunkFindUniqueArgs<ExtArgs>>): Prisma__NoteChunkClient<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one NoteChunk that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {NoteChunkFindUniqueOrThrowArgs} args - Arguments to find a NoteChunk
+     * @example
+     * // Get one NoteChunk
+     * const noteChunk = await prisma.noteChunk.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NoteChunkFindUniqueOrThrowArgs>(args: SelectSubset<T, NoteChunkFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NoteChunkClient<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NoteChunk that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteChunkFindFirstArgs} args - Arguments to find a NoteChunk
+     * @example
+     * // Get one NoteChunk
+     * const noteChunk = await prisma.noteChunk.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NoteChunkFindFirstArgs>(args?: SelectSubset<T, NoteChunkFindFirstArgs<ExtArgs>>): Prisma__NoteChunkClient<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NoteChunk that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteChunkFindFirstOrThrowArgs} args - Arguments to find a NoteChunk
+     * @example
+     * // Get one NoteChunk
+     * const noteChunk = await prisma.noteChunk.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NoteChunkFindFirstOrThrowArgs>(args?: SelectSubset<T, NoteChunkFindFirstOrThrowArgs<ExtArgs>>): Prisma__NoteChunkClient<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more NoteChunks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteChunkFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all NoteChunks
+     * const noteChunks = await prisma.noteChunk.findMany()
+     * 
+     * // Get first 10 NoteChunks
+     * const noteChunks = await prisma.noteChunk.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const noteChunkWithIdOnly = await prisma.noteChunk.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends NoteChunkFindManyArgs>(args?: SelectSubset<T, NoteChunkFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a NoteChunk.
+     * @param {NoteChunkCreateArgs} args - Arguments to create a NoteChunk.
+     * @example
+     * // Create one NoteChunk
+     * const NoteChunk = await prisma.noteChunk.create({
+     *   data: {
+     *     // ... data to create a NoteChunk
+     *   }
+     * })
+     * 
+     */
+    create<T extends NoteChunkCreateArgs>(args: SelectSubset<T, NoteChunkCreateArgs<ExtArgs>>): Prisma__NoteChunkClient<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many NoteChunks.
+     * @param {NoteChunkCreateManyArgs} args - Arguments to create many NoteChunks.
+     * @example
+     * // Create many NoteChunks
+     * const noteChunk = await prisma.noteChunk.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NoteChunkCreateManyArgs>(args?: SelectSubset<T, NoteChunkCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many NoteChunks and returns the data saved in the database.
+     * @param {NoteChunkCreateManyAndReturnArgs} args - Arguments to create many NoteChunks.
+     * @example
+     * // Create many NoteChunks
+     * const noteChunk = await prisma.noteChunk.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many NoteChunks and only return the `id`
+     * const noteChunkWithIdOnly = await prisma.noteChunk.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NoteChunkCreateManyAndReturnArgs>(args?: SelectSubset<T, NoteChunkCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a NoteChunk.
+     * @param {NoteChunkDeleteArgs} args - Arguments to delete one NoteChunk.
+     * @example
+     * // Delete one NoteChunk
+     * const NoteChunk = await prisma.noteChunk.delete({
+     *   where: {
+     *     // ... filter to delete one NoteChunk
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NoteChunkDeleteArgs>(args: SelectSubset<T, NoteChunkDeleteArgs<ExtArgs>>): Prisma__NoteChunkClient<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one NoteChunk.
+     * @param {NoteChunkUpdateArgs} args - Arguments to update one NoteChunk.
+     * @example
+     * // Update one NoteChunk
+     * const noteChunk = await prisma.noteChunk.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NoteChunkUpdateArgs>(args: SelectSubset<T, NoteChunkUpdateArgs<ExtArgs>>): Prisma__NoteChunkClient<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more NoteChunks.
+     * @param {NoteChunkDeleteManyArgs} args - Arguments to filter NoteChunks to delete.
+     * @example
+     * // Delete a few NoteChunks
+     * const { count } = await prisma.noteChunk.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NoteChunkDeleteManyArgs>(args?: SelectSubset<T, NoteChunkDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NoteChunks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteChunkUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many NoteChunks
+     * const noteChunk = await prisma.noteChunk.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NoteChunkUpdateManyArgs>(args: SelectSubset<T, NoteChunkUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NoteChunks and returns the data updated in the database.
+     * @param {NoteChunkUpdateManyAndReturnArgs} args - Arguments to update many NoteChunks.
+     * @example
+     * // Update many NoteChunks
+     * const noteChunk = await prisma.noteChunk.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more NoteChunks and only return the `id`
+     * const noteChunkWithIdOnly = await prisma.noteChunk.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends NoteChunkUpdateManyAndReturnArgs>(args: SelectSubset<T, NoteChunkUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one NoteChunk.
+     * @param {NoteChunkUpsertArgs} args - Arguments to update or create a NoteChunk.
+     * @example
+     * // Update or create a NoteChunk
+     * const noteChunk = await prisma.noteChunk.upsert({
+     *   create: {
+     *     // ... data to create a NoteChunk
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the NoteChunk we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NoteChunkUpsertArgs>(args: SelectSubset<T, NoteChunkUpsertArgs<ExtArgs>>): Prisma__NoteChunkClient<$Result.GetResult<Prisma.$NoteChunkPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of NoteChunks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteChunkCountArgs} args - Arguments to filter NoteChunks to count.
+     * @example
+     * // Count the number of NoteChunks
+     * const count = await prisma.noteChunk.count({
+     *   where: {
+     *     // ... the filter for the NoteChunks we want to count
+     *   }
+     * })
+    **/
+    count<T extends NoteChunkCountArgs>(
+      args?: Subset<T, NoteChunkCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NoteChunkCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a NoteChunk.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteChunkAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NoteChunkAggregateArgs>(args: Subset<T, NoteChunkAggregateArgs>): Prisma.PrismaPromise<GetNoteChunkAggregateType<T>>
+
+    /**
+     * Group by NoteChunk.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteChunkGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NoteChunkGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NoteChunkGroupByArgs['orderBy'] }
+        : { orderBy?: NoteChunkGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NoteChunkGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNoteChunkGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the NoteChunk model
+   */
+  readonly fields: NoteChunkFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for NoteChunk.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NoteChunkClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    subject<T extends SubjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SubjectDefaultArgs<ExtArgs>>): Prisma__SubjectClient<$Result.GetResult<Prisma.$SubjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the NoteChunk model
+   */
+  interface NoteChunkFieldRefs {
+    readonly id: FieldRef<"NoteChunk", 'String'>
+    readonly userId: FieldRef<"NoteChunk", 'String'>
+    readonly subjectId: FieldRef<"NoteChunk", 'String'>
+    readonly source: FieldRef<"NoteChunk", 'ChunkSource'>
+    readonly sourceId: FieldRef<"NoteChunk", 'String'>
+    readonly ordinal: FieldRef<"NoteChunk", 'Int'>
+    readonly breadcrumb: FieldRef<"NoteChunk", 'String'>
+    readonly content: FieldRef<"NoteChunk", 'String'>
+    readonly contentHash: FieldRef<"NoteChunk", 'String'>
+    readonly embedding: FieldRef<"NoteChunk", 'Float[]'>
+    readonly embeddingModel: FieldRef<"NoteChunk", 'String'>
+    readonly dims: FieldRef<"NoteChunk", 'Int'>
+    readonly createdAt: FieldRef<"NoteChunk", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * NoteChunk findUnique
+   */
+  export type NoteChunkFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which NoteChunk to fetch.
+     */
+    where: NoteChunkWhereUniqueInput
+  }
+
+  /**
+   * NoteChunk findUniqueOrThrow
+   */
+  export type NoteChunkFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which NoteChunk to fetch.
+     */
+    where: NoteChunkWhereUniqueInput
+  }
+
+  /**
+   * NoteChunk findFirst
+   */
+  export type NoteChunkFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which NoteChunk to fetch.
+     */
+    where?: NoteChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoteChunks to fetch.
+     */
+    orderBy?: NoteChunkOrderByWithRelationInput | NoteChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NoteChunks.
+     */
+    cursor?: NoteChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoteChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoteChunks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NoteChunks.
+     */
+    distinct?: NoteChunkScalarFieldEnum | NoteChunkScalarFieldEnum[]
+  }
+
+  /**
+   * NoteChunk findFirstOrThrow
+   */
+  export type NoteChunkFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which NoteChunk to fetch.
+     */
+    where?: NoteChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoteChunks to fetch.
+     */
+    orderBy?: NoteChunkOrderByWithRelationInput | NoteChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NoteChunks.
+     */
+    cursor?: NoteChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoteChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoteChunks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NoteChunks.
+     */
+    distinct?: NoteChunkScalarFieldEnum | NoteChunkScalarFieldEnum[]
+  }
+
+  /**
+   * NoteChunk findMany
+   */
+  export type NoteChunkFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which NoteChunks to fetch.
+     */
+    where?: NoteChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoteChunks to fetch.
+     */
+    orderBy?: NoteChunkOrderByWithRelationInput | NoteChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing NoteChunks.
+     */
+    cursor?: NoteChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoteChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoteChunks.
+     */
+    skip?: number
+    distinct?: NoteChunkScalarFieldEnum | NoteChunkScalarFieldEnum[]
+  }
+
+  /**
+   * NoteChunk create
+   */
+  export type NoteChunkCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+    /**
+     * The data needed to create a NoteChunk.
+     */
+    data: XOR<NoteChunkCreateInput, NoteChunkUncheckedCreateInput>
+  }
+
+  /**
+   * NoteChunk createMany
+   */
+  export type NoteChunkCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many NoteChunks.
+     */
+    data: NoteChunkCreateManyInput | NoteChunkCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NoteChunk createManyAndReturn
+   */
+  export type NoteChunkCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * The data used to create many NoteChunks.
+     */
+    data: NoteChunkCreateManyInput | NoteChunkCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * NoteChunk update
+   */
+  export type NoteChunkUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+    /**
+     * The data needed to update a NoteChunk.
+     */
+    data: XOR<NoteChunkUpdateInput, NoteChunkUncheckedUpdateInput>
+    /**
+     * Choose, which NoteChunk to update.
+     */
+    where: NoteChunkWhereUniqueInput
+  }
+
+  /**
+   * NoteChunk updateMany
+   */
+  export type NoteChunkUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update NoteChunks.
+     */
+    data: XOR<NoteChunkUpdateManyMutationInput, NoteChunkUncheckedUpdateManyInput>
+    /**
+     * Filter which NoteChunks to update
+     */
+    where?: NoteChunkWhereInput
+    /**
+     * Limit how many NoteChunks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * NoteChunk updateManyAndReturn
+   */
+  export type NoteChunkUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * The data used to update NoteChunks.
+     */
+    data: XOR<NoteChunkUpdateManyMutationInput, NoteChunkUncheckedUpdateManyInput>
+    /**
+     * Filter which NoteChunks to update
+     */
+    where?: NoteChunkWhereInput
+    /**
+     * Limit how many NoteChunks to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * NoteChunk upsert
+   */
+  export type NoteChunkUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+    /**
+     * The filter to search for the NoteChunk to update in case it exists.
+     */
+    where: NoteChunkWhereUniqueInput
+    /**
+     * In case the NoteChunk found by the `where` argument doesn't exist, create a new NoteChunk with this data.
+     */
+    create: XOR<NoteChunkCreateInput, NoteChunkUncheckedCreateInput>
+    /**
+     * In case the NoteChunk was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NoteChunkUpdateInput, NoteChunkUncheckedUpdateInput>
+  }
+
+  /**
+   * NoteChunk delete
+   */
+  export type NoteChunkDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+    /**
+     * Filter which NoteChunk to delete.
+     */
+    where: NoteChunkWhereUniqueInput
+  }
+
+  /**
+   * NoteChunk deleteMany
+   */
+  export type NoteChunkDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NoteChunks to delete
+     */
+    where?: NoteChunkWhereInput
+    /**
+     * Limit how many NoteChunks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * NoteChunk without action
+   */
+  export type NoteChunkDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoteChunk
+     */
+    select?: NoteChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoteChunk
+     */
+    omit?: NoteChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteChunkInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -12518,10 +13915,30 @@ export namespace Prisma {
     content: 'content',
     model: 'model',
     createdAt: 'createdAt',
+    sources: 'sources',
     conversationId: 'conversationId'
   };
 
   export type ChatMessageScalarFieldEnum = (typeof ChatMessageScalarFieldEnum)[keyof typeof ChatMessageScalarFieldEnum]
+
+
+  export const NoteChunkScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    subjectId: 'subjectId',
+    source: 'source',
+    sourceId: 'sourceId',
+    ordinal: 'ordinal',
+    breadcrumb: 'breadcrumb',
+    content: 'content',
+    contentHash: 'contentHash',
+    embedding: 'embedding',
+    embeddingModel: 'embeddingModel',
+    dims: 'dims',
+    createdAt: 'createdAt'
+  };
+
+  export type NoteChunkScalarFieldEnum = (typeof NoteChunkScalarFieldEnum)[keyof typeof NoteChunkScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -12659,9 +14076,16 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Float'
+   * Reference to a field of type 'ChunkSource'
    */
-  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+  export type EnumChunkSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ChunkSource'>
+    
+
+
+  /**
+   * Reference to a field of type 'ChunkSource[]'
+   */
+  export type ListEnumChunkSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ChunkSource[]'>
     
 
 
@@ -12669,6 +14093,13 @@ export namespace Prisma {
    * Reference to a field of type 'Float[]'
    */
   export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
     
   /**
    * Deep Input Types
@@ -12689,6 +14120,7 @@ export namespace Prisma {
     tasks?: TaskListRelationFilter
     resources?: ResourceListRelationFilter
     conversations?: ConversationListRelationFilter
+    noteChunks?: NoteChunkListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -12702,6 +14134,7 @@ export namespace Prisma {
     tasks?: TaskOrderByRelationAggregateInput
     resources?: ResourceOrderByRelationAggregateInput
     conversations?: ConversationOrderByRelationAggregateInput
+    noteChunks?: NoteChunkOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -12718,6 +14151,7 @@ export namespace Prisma {
     tasks?: TaskListRelationFilter
     resources?: ResourceListRelationFilter
     conversations?: ConversationListRelationFilter
+    noteChunks?: NoteChunkListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -12761,6 +14195,7 @@ export namespace Prisma {
     resources?: ResourceListRelationFilter
     tasks?: TaskListRelationFilter
     conversations?: ConversationListRelationFilter
+    noteChunks?: NoteChunkListRelationFilter
   }
 
   export type SubjectOrderByWithRelationInput = {
@@ -12777,6 +14212,7 @@ export namespace Prisma {
     resources?: ResourceOrderByRelationAggregateInput
     tasks?: TaskOrderByRelationAggregateInput
     conversations?: ConversationOrderByRelationAggregateInput
+    noteChunks?: NoteChunkOrderByRelationAggregateInput
   }
 
   export type SubjectWhereUniqueInput = Prisma.AtLeast<{
@@ -12796,6 +14232,7 @@ export namespace Prisma {
     resources?: ResourceListRelationFilter
     tasks?: TaskListRelationFilter
     conversations?: ConversationListRelationFilter
+    noteChunks?: NoteChunkListRelationFilter
   }, "id">
 
   export type SubjectOrderByWithAggregationInput = {
@@ -13318,6 +14755,7 @@ export namespace Prisma {
     content?: StringFilter<"ChatMessage"> | string
     model?: StringNullableFilter<"ChatMessage"> | string | null
     createdAt?: DateTimeFilter<"ChatMessage"> | Date | string
+    sources?: StringNullableListFilter<"ChatMessage">
     conversationId?: StringFilter<"ChatMessage"> | string
     conversation?: XOR<ConversationScalarRelationFilter, ConversationWhereInput>
   }
@@ -13328,6 +14766,7 @@ export namespace Prisma {
     content?: SortOrder
     model?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    sources?: SortOrder
     conversationId?: SortOrder
     conversation?: ConversationOrderByWithRelationInput
   }
@@ -13341,6 +14780,7 @@ export namespace Prisma {
     content?: StringFilter<"ChatMessage"> | string
     model?: StringNullableFilter<"ChatMessage"> | string | null
     createdAt?: DateTimeFilter<"ChatMessage"> | Date | string
+    sources?: StringNullableListFilter<"ChatMessage">
     conversationId?: StringFilter<"ChatMessage"> | string
     conversation?: XOR<ConversationScalarRelationFilter, ConversationWhereInput>
   }, "id">
@@ -13351,6 +14791,7 @@ export namespace Prisma {
     content?: SortOrder
     model?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    sources?: SortOrder
     conversationId?: SortOrder
     _count?: ChatMessageCountOrderByAggregateInput
     _max?: ChatMessageMaxOrderByAggregateInput
@@ -13366,7 +14807,109 @@ export namespace Prisma {
     content?: StringWithAggregatesFilter<"ChatMessage"> | string
     model?: StringNullableWithAggregatesFilter<"ChatMessage"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"ChatMessage"> | Date | string
+    sources?: StringNullableListFilter<"ChatMessage">
     conversationId?: StringWithAggregatesFilter<"ChatMessage"> | string
+  }
+
+  export type NoteChunkWhereInput = {
+    AND?: NoteChunkWhereInput | NoteChunkWhereInput[]
+    OR?: NoteChunkWhereInput[]
+    NOT?: NoteChunkWhereInput | NoteChunkWhereInput[]
+    id?: StringFilter<"NoteChunk"> | string
+    userId?: StringFilter<"NoteChunk"> | string
+    subjectId?: StringFilter<"NoteChunk"> | string
+    source?: EnumChunkSourceFilter<"NoteChunk"> | $Enums.ChunkSource
+    sourceId?: StringFilter<"NoteChunk"> | string
+    ordinal?: IntFilter<"NoteChunk"> | number
+    breadcrumb?: StringFilter<"NoteChunk"> | string
+    content?: StringFilter<"NoteChunk"> | string
+    contentHash?: StringFilter<"NoteChunk"> | string
+    embedding?: FloatNullableListFilter<"NoteChunk">
+    embeddingModel?: StringFilter<"NoteChunk"> | string
+    dims?: IntFilter<"NoteChunk"> | number
+    createdAt?: DateTimeFilter<"NoteChunk"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    subject?: XOR<SubjectScalarRelationFilter, SubjectWhereInput>
+  }
+
+  export type NoteChunkOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    subjectId?: SortOrder
+    source?: SortOrder
+    sourceId?: SortOrder
+    ordinal?: SortOrder
+    breadcrumb?: SortOrder
+    content?: SortOrder
+    contentHash?: SortOrder
+    embedding?: SortOrder
+    embeddingModel?: SortOrder
+    dims?: SortOrder
+    createdAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+    subject?: SubjectOrderByWithRelationInput
+  }
+
+  export type NoteChunkWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    source_sourceId_ordinal?: NoteChunkSourceSourceIdOrdinalCompoundUniqueInput
+    AND?: NoteChunkWhereInput | NoteChunkWhereInput[]
+    OR?: NoteChunkWhereInput[]
+    NOT?: NoteChunkWhereInput | NoteChunkWhereInput[]
+    userId?: StringFilter<"NoteChunk"> | string
+    subjectId?: StringFilter<"NoteChunk"> | string
+    source?: EnumChunkSourceFilter<"NoteChunk"> | $Enums.ChunkSource
+    sourceId?: StringFilter<"NoteChunk"> | string
+    ordinal?: IntFilter<"NoteChunk"> | number
+    breadcrumb?: StringFilter<"NoteChunk"> | string
+    content?: StringFilter<"NoteChunk"> | string
+    contentHash?: StringFilter<"NoteChunk"> | string
+    embedding?: FloatNullableListFilter<"NoteChunk">
+    embeddingModel?: StringFilter<"NoteChunk"> | string
+    dims?: IntFilter<"NoteChunk"> | number
+    createdAt?: DateTimeFilter<"NoteChunk"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    subject?: XOR<SubjectScalarRelationFilter, SubjectWhereInput>
+  }, "id" | "source_sourceId_ordinal">
+
+  export type NoteChunkOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    subjectId?: SortOrder
+    source?: SortOrder
+    sourceId?: SortOrder
+    ordinal?: SortOrder
+    breadcrumb?: SortOrder
+    content?: SortOrder
+    contentHash?: SortOrder
+    embedding?: SortOrder
+    embeddingModel?: SortOrder
+    dims?: SortOrder
+    createdAt?: SortOrder
+    _count?: NoteChunkCountOrderByAggregateInput
+    _avg?: NoteChunkAvgOrderByAggregateInput
+    _max?: NoteChunkMaxOrderByAggregateInput
+    _min?: NoteChunkMinOrderByAggregateInput
+    _sum?: NoteChunkSumOrderByAggregateInput
+  }
+
+  export type NoteChunkScalarWhereWithAggregatesInput = {
+    AND?: NoteChunkScalarWhereWithAggregatesInput | NoteChunkScalarWhereWithAggregatesInput[]
+    OR?: NoteChunkScalarWhereWithAggregatesInput[]
+    NOT?: NoteChunkScalarWhereWithAggregatesInput | NoteChunkScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"NoteChunk"> | string
+    userId?: StringWithAggregatesFilter<"NoteChunk"> | string
+    subjectId?: StringWithAggregatesFilter<"NoteChunk"> | string
+    source?: EnumChunkSourceWithAggregatesFilter<"NoteChunk"> | $Enums.ChunkSource
+    sourceId?: StringWithAggregatesFilter<"NoteChunk"> | string
+    ordinal?: IntWithAggregatesFilter<"NoteChunk"> | number
+    breadcrumb?: StringWithAggregatesFilter<"NoteChunk"> | string
+    content?: StringWithAggregatesFilter<"NoteChunk"> | string
+    contentHash?: StringWithAggregatesFilter<"NoteChunk"> | string
+    embedding?: FloatNullableListFilter<"NoteChunk">
+    embeddingModel?: StringWithAggregatesFilter<"NoteChunk"> | string
+    dims?: IntWithAggregatesFilter<"NoteChunk"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"NoteChunk"> | Date | string
   }
 
   export type UserCreateInput = {
@@ -13380,6 +14923,7 @@ export namespace Prisma {
     tasks?: TaskCreateNestedManyWithoutUserInput
     resources?: ResourceCreateNestedManyWithoutUserInput
     conversations?: ConversationCreateNestedManyWithoutUserInput
+    noteChunks?: NoteChunkCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -13393,6 +14937,7 @@ export namespace Prisma {
     tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     resources?: ResourceUncheckedCreateNestedManyWithoutUserInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutUserInput
+    noteChunks?: NoteChunkUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -13406,6 +14951,7 @@ export namespace Prisma {
     tasks?: TaskUpdateManyWithoutUserNestedInput
     resources?: ResourceUpdateManyWithoutUserNestedInput
     conversations?: ConversationUpdateManyWithoutUserNestedInput
+    noteChunks?: NoteChunkUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -13419,6 +14965,7 @@ export namespace Prisma {
     tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     resources?: ResourceUncheckedUpdateManyWithoutUserNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutUserNestedInput
+    noteChunks?: NoteChunkUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -13461,6 +15008,7 @@ export namespace Prisma {
     resources?: ResourceCreateNestedManyWithoutSubjectInput
     tasks?: TaskCreateNestedManyWithoutSubjectInput
     conversations?: ConversationCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectUncheckedCreateInput = {
@@ -13476,6 +15024,7 @@ export namespace Prisma {
     resources?: ResourceUncheckedCreateNestedManyWithoutSubjectInput
     tasks?: TaskUncheckedCreateNestedManyWithoutSubjectInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkUncheckedCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectUpdateInput = {
@@ -13491,6 +15040,7 @@ export namespace Prisma {
     resources?: ResourceUpdateManyWithoutSubjectNestedInput
     tasks?: TaskUpdateManyWithoutSubjectNestedInput
     conversations?: ConversationUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUpdateManyWithoutSubjectNestedInput
   }
 
   export type SubjectUncheckedUpdateInput = {
@@ -13506,6 +15056,7 @@ export namespace Prisma {
     resources?: ResourceUncheckedUpdateManyWithoutSubjectNestedInput
     tasks?: TaskUncheckedUpdateManyWithoutSubjectNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUncheckedUpdateManyWithoutSubjectNestedInput
   }
 
   export type SubjectCreateManyInput = {
@@ -14052,6 +15603,7 @@ export namespace Prisma {
     content: string
     model?: string | null
     createdAt?: Date | string
+    sources?: ChatMessageCreatesourcesInput | string[]
     conversation: ConversationCreateNestedOneWithoutMessagesInput
   }
 
@@ -14061,6 +15613,7 @@ export namespace Prisma {
     content: string
     model?: string | null
     createdAt?: Date | string
+    sources?: ChatMessageCreatesourcesInput | string[]
     conversationId: string
   }
 
@@ -14070,6 +15623,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     model?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sources?: ChatMessageUpdatesourcesInput | string[]
     conversation?: ConversationUpdateOneRequiredWithoutMessagesNestedInput
   }
 
@@ -14079,6 +15633,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     model?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sources?: ChatMessageUpdatesourcesInput | string[]
     conversationId?: StringFieldUpdateOperationsInput | string
   }
 
@@ -14088,6 +15643,7 @@ export namespace Prisma {
     content: string
     model?: string | null
     createdAt?: Date | string
+    sources?: ChatMessageCreatesourcesInput | string[]
     conversationId: string
   }
 
@@ -14097,6 +15653,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     model?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sources?: ChatMessageUpdatesourcesInput | string[]
   }
 
   export type ChatMessageUncheckedUpdateManyInput = {
@@ -14105,7 +15662,118 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     model?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sources?: ChatMessageUpdatesourcesInput | string[]
     conversationId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type NoteChunkCreateInput = {
+    id?: string
+    source: $Enums.ChunkSource
+    sourceId: string
+    ordinal: number
+    breadcrumb: string
+    content: string
+    contentHash: string
+    embedding?: NoteChunkCreateembeddingInput | number[]
+    embeddingModel: string
+    dims: number
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutNoteChunksInput
+    subject: SubjectCreateNestedOneWithoutNoteChunksInput
+  }
+
+  export type NoteChunkUncheckedCreateInput = {
+    id?: string
+    userId: string
+    subjectId: string
+    source: $Enums.ChunkSource
+    sourceId: string
+    ordinal: number
+    breadcrumb: string
+    content: string
+    contentHash: string
+    embedding?: NoteChunkCreateembeddingInput | number[]
+    embeddingModel: string
+    dims: number
+    createdAt?: Date | string
+  }
+
+  export type NoteChunkUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    source?: EnumChunkSourceFieldUpdateOperationsInput | $Enums.ChunkSource
+    sourceId?: StringFieldUpdateOperationsInput | string
+    ordinal?: IntFieldUpdateOperationsInput | number
+    breadcrumb?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    contentHash?: StringFieldUpdateOperationsInput | string
+    embedding?: NoteChunkUpdateembeddingInput | number[]
+    embeddingModel?: StringFieldUpdateOperationsInput | string
+    dims?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutNoteChunksNestedInput
+    subject?: SubjectUpdateOneRequiredWithoutNoteChunksNestedInput
+  }
+
+  export type NoteChunkUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    subjectId?: StringFieldUpdateOperationsInput | string
+    source?: EnumChunkSourceFieldUpdateOperationsInput | $Enums.ChunkSource
+    sourceId?: StringFieldUpdateOperationsInput | string
+    ordinal?: IntFieldUpdateOperationsInput | number
+    breadcrumb?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    contentHash?: StringFieldUpdateOperationsInput | string
+    embedding?: NoteChunkUpdateembeddingInput | number[]
+    embeddingModel?: StringFieldUpdateOperationsInput | string
+    dims?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteChunkCreateManyInput = {
+    id?: string
+    userId: string
+    subjectId: string
+    source: $Enums.ChunkSource
+    sourceId: string
+    ordinal: number
+    breadcrumb: string
+    content: string
+    contentHash: string
+    embedding?: NoteChunkCreateembeddingInput | number[]
+    embeddingModel: string
+    dims: number
+    createdAt?: Date | string
+  }
+
+  export type NoteChunkUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    source?: EnumChunkSourceFieldUpdateOperationsInput | $Enums.ChunkSource
+    sourceId?: StringFieldUpdateOperationsInput | string
+    ordinal?: IntFieldUpdateOperationsInput | number
+    breadcrumb?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    contentHash?: StringFieldUpdateOperationsInput | string
+    embedding?: NoteChunkUpdateembeddingInput | number[]
+    embeddingModel?: StringFieldUpdateOperationsInput | string
+    dims?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteChunkUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    subjectId?: StringFieldUpdateOperationsInput | string
+    source?: EnumChunkSourceFieldUpdateOperationsInput | $Enums.ChunkSource
+    sourceId?: StringFieldUpdateOperationsInput | string
+    ordinal?: IntFieldUpdateOperationsInput | number
+    breadcrumb?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    contentHash?: StringFieldUpdateOperationsInput | string
+    embedding?: NoteChunkUpdateembeddingInput | number[]
+    embeddingModel?: StringFieldUpdateOperationsInput | string
+    dims?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -14173,6 +15841,12 @@ export namespace Prisma {
     none?: ConversationWhereInput
   }
 
+  export type NoteChunkListRelationFilter = {
+    every?: NoteChunkWhereInput
+    some?: NoteChunkWhereInput
+    none?: NoteChunkWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -14191,6 +15865,10 @@ export namespace Prisma {
   }
 
   export type ConversationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type NoteChunkOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -14790,6 +16468,7 @@ export namespace Prisma {
     content?: SortOrder
     model?: SortOrder
     createdAt?: SortOrder
+    sources?: SortOrder
     conversationId?: SortOrder
   }
 
@@ -14821,6 +16500,95 @@ export namespace Prisma {
     _max?: NestedEnumChatRoleFilter<$PrismaModel>
   }
 
+  export type EnumChunkSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkSource | EnumChunkSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkSource[] | ListEnumChunkSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkSource[] | ListEnumChunkSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkSourceFilter<$PrismaModel> | $Enums.ChunkSource
+  }
+
+  export type FloatNullableListFilter<$PrismaModel = never> = {
+    equals?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    has?: number | FloatFieldRefInput<$PrismaModel> | null
+    hasEvery?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    hasSome?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+
+  export type NoteChunkSourceSourceIdOrdinalCompoundUniqueInput = {
+    source: $Enums.ChunkSource
+    sourceId: string
+    ordinal: number
+  }
+
+  export type NoteChunkCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    subjectId?: SortOrder
+    source?: SortOrder
+    sourceId?: SortOrder
+    ordinal?: SortOrder
+    breadcrumb?: SortOrder
+    content?: SortOrder
+    contentHash?: SortOrder
+    embedding?: SortOrder
+    embeddingModel?: SortOrder
+    dims?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type NoteChunkAvgOrderByAggregateInput = {
+    ordinal?: SortOrder
+    embedding?: SortOrder
+    dims?: SortOrder
+  }
+
+  export type NoteChunkMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    subjectId?: SortOrder
+    source?: SortOrder
+    sourceId?: SortOrder
+    ordinal?: SortOrder
+    breadcrumb?: SortOrder
+    content?: SortOrder
+    contentHash?: SortOrder
+    embeddingModel?: SortOrder
+    dims?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type NoteChunkMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    subjectId?: SortOrder
+    source?: SortOrder
+    sourceId?: SortOrder
+    ordinal?: SortOrder
+    breadcrumb?: SortOrder
+    content?: SortOrder
+    contentHash?: SortOrder
+    embeddingModel?: SortOrder
+    dims?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type NoteChunkSumOrderByAggregateInput = {
+    ordinal?: SortOrder
+    embedding?: SortOrder
+    dims?: SortOrder
+  }
+
+  export type EnumChunkSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkSource | EnumChunkSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkSource[] | ListEnumChunkSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkSource[] | ListEnumChunkSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkSourceWithAggregatesFilter<$PrismaModel> | $Enums.ChunkSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChunkSourceFilter<$PrismaModel>
+    _max?: NestedEnumChunkSourceFilter<$PrismaModel>
+  }
+
   export type SubjectCreateNestedManyWithoutUserInput = {
     create?: XOR<SubjectCreateWithoutUserInput, SubjectUncheckedCreateWithoutUserInput> | SubjectCreateWithoutUserInput[] | SubjectUncheckedCreateWithoutUserInput[]
     connectOrCreate?: SubjectCreateOrConnectWithoutUserInput | SubjectCreateOrConnectWithoutUserInput[]
@@ -14849,6 +16617,13 @@ export namespace Prisma {
     connect?: ConversationWhereUniqueInput | ConversationWhereUniqueInput[]
   }
 
+  export type NoteChunkCreateNestedManyWithoutUserInput = {
+    create?: XOR<NoteChunkCreateWithoutUserInput, NoteChunkUncheckedCreateWithoutUserInput> | NoteChunkCreateWithoutUserInput[] | NoteChunkUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: NoteChunkCreateOrConnectWithoutUserInput | NoteChunkCreateOrConnectWithoutUserInput[]
+    createMany?: NoteChunkCreateManyUserInputEnvelope
+    connect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+  }
+
   export type SubjectUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<SubjectCreateWithoutUserInput, SubjectUncheckedCreateWithoutUserInput> | SubjectCreateWithoutUserInput[] | SubjectUncheckedCreateWithoutUserInput[]
     connectOrCreate?: SubjectCreateOrConnectWithoutUserInput | SubjectCreateOrConnectWithoutUserInput[]
@@ -14875,6 +16650,13 @@ export namespace Prisma {
     connectOrCreate?: ConversationCreateOrConnectWithoutUserInput | ConversationCreateOrConnectWithoutUserInput[]
     createMany?: ConversationCreateManyUserInputEnvelope
     connect?: ConversationWhereUniqueInput | ConversationWhereUniqueInput[]
+  }
+
+  export type NoteChunkUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<NoteChunkCreateWithoutUserInput, NoteChunkUncheckedCreateWithoutUserInput> | NoteChunkCreateWithoutUserInput[] | NoteChunkUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: NoteChunkCreateOrConnectWithoutUserInput | NoteChunkCreateOrConnectWithoutUserInput[]
+    createMany?: NoteChunkCreateManyUserInputEnvelope
+    connect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -14945,6 +16727,20 @@ export namespace Prisma {
     deleteMany?: ConversationScalarWhereInput | ConversationScalarWhereInput[]
   }
 
+  export type NoteChunkUpdateManyWithoutUserNestedInput = {
+    create?: XOR<NoteChunkCreateWithoutUserInput, NoteChunkUncheckedCreateWithoutUserInput> | NoteChunkCreateWithoutUserInput[] | NoteChunkUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: NoteChunkCreateOrConnectWithoutUserInput | NoteChunkCreateOrConnectWithoutUserInput[]
+    upsert?: NoteChunkUpsertWithWhereUniqueWithoutUserInput | NoteChunkUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: NoteChunkCreateManyUserInputEnvelope
+    set?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    disconnect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    delete?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    connect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    update?: NoteChunkUpdateWithWhereUniqueWithoutUserInput | NoteChunkUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: NoteChunkUpdateManyWithWhereWithoutUserInput | NoteChunkUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: NoteChunkScalarWhereInput | NoteChunkScalarWhereInput[]
+  }
+
   export type SubjectUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<SubjectCreateWithoutUserInput, SubjectUncheckedCreateWithoutUserInput> | SubjectCreateWithoutUserInput[] | SubjectUncheckedCreateWithoutUserInput[]
     connectOrCreate?: SubjectCreateOrConnectWithoutUserInput | SubjectCreateOrConnectWithoutUserInput[]
@@ -15001,6 +16797,20 @@ export namespace Prisma {
     deleteMany?: ConversationScalarWhereInput | ConversationScalarWhereInput[]
   }
 
+  export type NoteChunkUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<NoteChunkCreateWithoutUserInput, NoteChunkUncheckedCreateWithoutUserInput> | NoteChunkCreateWithoutUserInput[] | NoteChunkUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: NoteChunkCreateOrConnectWithoutUserInput | NoteChunkCreateOrConnectWithoutUserInput[]
+    upsert?: NoteChunkUpsertWithWhereUniqueWithoutUserInput | NoteChunkUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: NoteChunkCreateManyUserInputEnvelope
+    set?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    disconnect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    delete?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    connect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    update?: NoteChunkUpdateWithWhereUniqueWithoutUserInput | NoteChunkUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: NoteChunkUpdateManyWithWhereWithoutUserInput | NoteChunkUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: NoteChunkScalarWhereInput | NoteChunkScalarWhereInput[]
+  }
+
   export type UserCreateNestedOneWithoutSubjectsInput = {
     create?: XOR<UserCreateWithoutSubjectsInput, UserUncheckedCreateWithoutSubjectsInput>
     connectOrCreate?: UserCreateOrConnectWithoutSubjectsInput
@@ -15035,6 +16845,13 @@ export namespace Prisma {
     connect?: ConversationWhereUniqueInput | ConversationWhereUniqueInput[]
   }
 
+  export type NoteChunkCreateNestedManyWithoutSubjectInput = {
+    create?: XOR<NoteChunkCreateWithoutSubjectInput, NoteChunkUncheckedCreateWithoutSubjectInput> | NoteChunkCreateWithoutSubjectInput[] | NoteChunkUncheckedCreateWithoutSubjectInput[]
+    connectOrCreate?: NoteChunkCreateOrConnectWithoutSubjectInput | NoteChunkCreateOrConnectWithoutSubjectInput[]
+    createMany?: NoteChunkCreateManySubjectInputEnvelope
+    connect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+  }
+
   export type MilestoneUncheckedCreateNestedManyWithoutSubjectInput = {
     create?: XOR<MilestoneCreateWithoutSubjectInput, MilestoneUncheckedCreateWithoutSubjectInput> | MilestoneCreateWithoutSubjectInput[] | MilestoneUncheckedCreateWithoutSubjectInput[]
     connectOrCreate?: MilestoneCreateOrConnectWithoutSubjectInput | MilestoneCreateOrConnectWithoutSubjectInput[]
@@ -15061,6 +16878,13 @@ export namespace Prisma {
     connectOrCreate?: ConversationCreateOrConnectWithoutSubjectInput | ConversationCreateOrConnectWithoutSubjectInput[]
     createMany?: ConversationCreateManySubjectInputEnvelope
     connect?: ConversationWhereUniqueInput | ConversationWhereUniqueInput[]
+  }
+
+  export type NoteChunkUncheckedCreateNestedManyWithoutSubjectInput = {
+    create?: XOR<NoteChunkCreateWithoutSubjectInput, NoteChunkUncheckedCreateWithoutSubjectInput> | NoteChunkCreateWithoutSubjectInput[] | NoteChunkUncheckedCreateWithoutSubjectInput[]
+    connectOrCreate?: NoteChunkCreateOrConnectWithoutSubjectInput | NoteChunkCreateOrConnectWithoutSubjectInput[]
+    createMany?: NoteChunkCreateManySubjectInputEnvelope
+    connect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
   }
 
   export type BoolFieldUpdateOperationsInput = {
@@ -15131,6 +16955,20 @@ export namespace Prisma {
     deleteMany?: ConversationScalarWhereInput | ConversationScalarWhereInput[]
   }
 
+  export type NoteChunkUpdateManyWithoutSubjectNestedInput = {
+    create?: XOR<NoteChunkCreateWithoutSubjectInput, NoteChunkUncheckedCreateWithoutSubjectInput> | NoteChunkCreateWithoutSubjectInput[] | NoteChunkUncheckedCreateWithoutSubjectInput[]
+    connectOrCreate?: NoteChunkCreateOrConnectWithoutSubjectInput | NoteChunkCreateOrConnectWithoutSubjectInput[]
+    upsert?: NoteChunkUpsertWithWhereUniqueWithoutSubjectInput | NoteChunkUpsertWithWhereUniqueWithoutSubjectInput[]
+    createMany?: NoteChunkCreateManySubjectInputEnvelope
+    set?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    disconnect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    delete?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    connect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    update?: NoteChunkUpdateWithWhereUniqueWithoutSubjectInput | NoteChunkUpdateWithWhereUniqueWithoutSubjectInput[]
+    updateMany?: NoteChunkUpdateManyWithWhereWithoutSubjectInput | NoteChunkUpdateManyWithWhereWithoutSubjectInput[]
+    deleteMany?: NoteChunkScalarWhereInput | NoteChunkScalarWhereInput[]
+  }
+
   export type MilestoneUncheckedUpdateManyWithoutSubjectNestedInput = {
     create?: XOR<MilestoneCreateWithoutSubjectInput, MilestoneUncheckedCreateWithoutSubjectInput> | MilestoneCreateWithoutSubjectInput[] | MilestoneUncheckedCreateWithoutSubjectInput[]
     connectOrCreate?: MilestoneCreateOrConnectWithoutSubjectInput | MilestoneCreateOrConnectWithoutSubjectInput[]
@@ -15185,6 +17023,20 @@ export namespace Prisma {
     update?: ConversationUpdateWithWhereUniqueWithoutSubjectInput | ConversationUpdateWithWhereUniqueWithoutSubjectInput[]
     updateMany?: ConversationUpdateManyWithWhereWithoutSubjectInput | ConversationUpdateManyWithWhereWithoutSubjectInput[]
     deleteMany?: ConversationScalarWhereInput | ConversationScalarWhereInput[]
+  }
+
+  export type NoteChunkUncheckedUpdateManyWithoutSubjectNestedInput = {
+    create?: XOR<NoteChunkCreateWithoutSubjectInput, NoteChunkUncheckedCreateWithoutSubjectInput> | NoteChunkCreateWithoutSubjectInput[] | NoteChunkUncheckedCreateWithoutSubjectInput[]
+    connectOrCreate?: NoteChunkCreateOrConnectWithoutSubjectInput | NoteChunkCreateOrConnectWithoutSubjectInput[]
+    upsert?: NoteChunkUpsertWithWhereUniqueWithoutSubjectInput | NoteChunkUpsertWithWhereUniqueWithoutSubjectInput[]
+    createMany?: NoteChunkCreateManySubjectInputEnvelope
+    set?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    disconnect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    delete?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    connect?: NoteChunkWhereUniqueInput | NoteChunkWhereUniqueInput[]
+    update?: NoteChunkUpdateWithWhereUniqueWithoutSubjectInput | NoteChunkUpdateWithWhereUniqueWithoutSubjectInput[]
+    updateMany?: NoteChunkUpdateManyWithWhereWithoutSubjectInput | NoteChunkUpdateManyWithWhereWithoutSubjectInput[]
+    deleteMany?: NoteChunkScalarWhereInput | NoteChunkScalarWhereInput[]
   }
 
   export type SubjectCreateNestedOneWithoutMilestonesInput = {
@@ -15598,6 +17450,10 @@ export namespace Prisma {
     deleteMany?: ChatMessageScalarWhereInput | ChatMessageScalarWhereInput[]
   }
 
+  export type ChatMessageCreatesourcesInput = {
+    set: string[]
+  }
+
   export type ConversationCreateNestedOneWithoutMessagesInput = {
     create?: XOR<ConversationCreateWithoutMessagesInput, ConversationUncheckedCreateWithoutMessagesInput>
     connectOrCreate?: ConversationCreateOrConnectWithoutMessagesInput
@@ -15608,12 +17464,58 @@ export namespace Prisma {
     set?: $Enums.ChatRole
   }
 
+  export type ChatMessageUpdatesourcesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
   export type ConversationUpdateOneRequiredWithoutMessagesNestedInput = {
     create?: XOR<ConversationCreateWithoutMessagesInput, ConversationUncheckedCreateWithoutMessagesInput>
     connectOrCreate?: ConversationCreateOrConnectWithoutMessagesInput
     upsert?: ConversationUpsertWithoutMessagesInput
     connect?: ConversationWhereUniqueInput
     update?: XOR<XOR<ConversationUpdateToOneWithWhereWithoutMessagesInput, ConversationUpdateWithoutMessagesInput>, ConversationUncheckedUpdateWithoutMessagesInput>
+  }
+
+  export type NoteChunkCreateembeddingInput = {
+    set: number[]
+  }
+
+  export type UserCreateNestedOneWithoutNoteChunksInput = {
+    create?: XOR<UserCreateWithoutNoteChunksInput, UserUncheckedCreateWithoutNoteChunksInput>
+    connectOrCreate?: UserCreateOrConnectWithoutNoteChunksInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type SubjectCreateNestedOneWithoutNoteChunksInput = {
+    create?: XOR<SubjectCreateWithoutNoteChunksInput, SubjectUncheckedCreateWithoutNoteChunksInput>
+    connectOrCreate?: SubjectCreateOrConnectWithoutNoteChunksInput
+    connect?: SubjectWhereUniqueInput
+  }
+
+  export type EnumChunkSourceFieldUpdateOperationsInput = {
+    set?: $Enums.ChunkSource
+  }
+
+  export type NoteChunkUpdateembeddingInput = {
+    set?: number[]
+    push?: number | number[]
+  }
+
+  export type UserUpdateOneRequiredWithoutNoteChunksNestedInput = {
+    create?: XOR<UserCreateWithoutNoteChunksInput, UserUncheckedCreateWithoutNoteChunksInput>
+    connectOrCreate?: UserCreateOrConnectWithoutNoteChunksInput
+    upsert?: UserUpsertWithoutNoteChunksInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutNoteChunksInput, UserUpdateWithoutNoteChunksInput>, UserUncheckedUpdateWithoutNoteChunksInput>
+  }
+
+  export type SubjectUpdateOneRequiredWithoutNoteChunksNestedInput = {
+    create?: XOR<SubjectCreateWithoutNoteChunksInput, SubjectUncheckedCreateWithoutNoteChunksInput>
+    connectOrCreate?: SubjectCreateOrConnectWithoutNoteChunksInput
+    upsert?: SubjectUpsertWithoutNoteChunksInput
+    connect?: SubjectWhereUniqueInput
+    update?: XOR<XOR<SubjectUpdateToOneWithWhereWithoutNoteChunksInput, SubjectUpdateWithoutNoteChunksInput>, SubjectUncheckedUpdateWithoutNoteChunksInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -15885,6 +17787,23 @@ export namespace Prisma {
     _max?: NestedEnumChatRoleFilter<$PrismaModel>
   }
 
+  export type NestedEnumChunkSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkSource | EnumChunkSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkSource[] | ListEnumChunkSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkSource[] | ListEnumChunkSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkSourceFilter<$PrismaModel> | $Enums.ChunkSource
+  }
+
+  export type NestedEnumChunkSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ChunkSource | EnumChunkSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.ChunkSource[] | ListEnumChunkSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ChunkSource[] | ListEnumChunkSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumChunkSourceWithAggregatesFilter<$PrismaModel> | $Enums.ChunkSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumChunkSourceFilter<$PrismaModel>
+    _max?: NestedEnumChunkSourceFilter<$PrismaModel>
+  }
+
   export type SubjectCreateWithoutUserInput = {
     id?: string
     title: string
@@ -15897,6 +17816,7 @@ export namespace Prisma {
     resources?: ResourceCreateNestedManyWithoutSubjectInput
     tasks?: TaskCreateNestedManyWithoutSubjectInput
     conversations?: ConversationCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectUncheckedCreateWithoutUserInput = {
@@ -15911,6 +17831,7 @@ export namespace Prisma {
     resources?: ResourceUncheckedCreateNestedManyWithoutSubjectInput
     tasks?: TaskUncheckedCreateNestedManyWithoutSubjectInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkUncheckedCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectCreateOrConnectWithoutUserInput = {
@@ -16030,6 +17951,46 @@ export namespace Prisma {
 
   export type ConversationCreateManyUserInputEnvelope = {
     data: ConversationCreateManyUserInput | ConversationCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type NoteChunkCreateWithoutUserInput = {
+    id?: string
+    source: $Enums.ChunkSource
+    sourceId: string
+    ordinal: number
+    breadcrumb: string
+    content: string
+    contentHash: string
+    embedding?: NoteChunkCreateembeddingInput | number[]
+    embeddingModel: string
+    dims: number
+    createdAt?: Date | string
+    subject: SubjectCreateNestedOneWithoutNoteChunksInput
+  }
+
+  export type NoteChunkUncheckedCreateWithoutUserInput = {
+    id?: string
+    subjectId: string
+    source: $Enums.ChunkSource
+    sourceId: string
+    ordinal: number
+    breadcrumb: string
+    content: string
+    contentHash: string
+    embedding?: NoteChunkCreateembeddingInput | number[]
+    embeddingModel: string
+    dims: number
+    createdAt?: Date | string
+  }
+
+  export type NoteChunkCreateOrConnectWithoutUserInput = {
+    where: NoteChunkWhereUniqueInput
+    create: XOR<NoteChunkCreateWithoutUserInput, NoteChunkUncheckedCreateWithoutUserInput>
+  }
+
+  export type NoteChunkCreateManyUserInputEnvelope = {
+    data: NoteChunkCreateManyUserInput | NoteChunkCreateManyUserInput[]
     skipDuplicates?: boolean
   }
 
@@ -16160,6 +18121,41 @@ export namespace Prisma {
     contextSubjectIds?: StringNullableListFilter<"Conversation">
   }
 
+  export type NoteChunkUpsertWithWhereUniqueWithoutUserInput = {
+    where: NoteChunkWhereUniqueInput
+    update: XOR<NoteChunkUpdateWithoutUserInput, NoteChunkUncheckedUpdateWithoutUserInput>
+    create: XOR<NoteChunkCreateWithoutUserInput, NoteChunkUncheckedCreateWithoutUserInput>
+  }
+
+  export type NoteChunkUpdateWithWhereUniqueWithoutUserInput = {
+    where: NoteChunkWhereUniqueInput
+    data: XOR<NoteChunkUpdateWithoutUserInput, NoteChunkUncheckedUpdateWithoutUserInput>
+  }
+
+  export type NoteChunkUpdateManyWithWhereWithoutUserInput = {
+    where: NoteChunkScalarWhereInput
+    data: XOR<NoteChunkUpdateManyMutationInput, NoteChunkUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type NoteChunkScalarWhereInput = {
+    AND?: NoteChunkScalarWhereInput | NoteChunkScalarWhereInput[]
+    OR?: NoteChunkScalarWhereInput[]
+    NOT?: NoteChunkScalarWhereInput | NoteChunkScalarWhereInput[]
+    id?: StringFilter<"NoteChunk"> | string
+    userId?: StringFilter<"NoteChunk"> | string
+    subjectId?: StringFilter<"NoteChunk"> | string
+    source?: EnumChunkSourceFilter<"NoteChunk"> | $Enums.ChunkSource
+    sourceId?: StringFilter<"NoteChunk"> | string
+    ordinal?: IntFilter<"NoteChunk"> | number
+    breadcrumb?: StringFilter<"NoteChunk"> | string
+    content?: StringFilter<"NoteChunk"> | string
+    contentHash?: StringFilter<"NoteChunk"> | string
+    embedding?: FloatNullableListFilter<"NoteChunk">
+    embeddingModel?: StringFilter<"NoteChunk"> | string
+    dims?: IntFilter<"NoteChunk"> | number
+    createdAt?: DateTimeFilter<"NoteChunk"> | Date | string
+  }
+
   export type UserCreateWithoutSubjectsInput = {
     id?: string
     email: string
@@ -16170,6 +18166,7 @@ export namespace Prisma {
     tasks?: TaskCreateNestedManyWithoutUserInput
     resources?: ResourceCreateNestedManyWithoutUserInput
     conversations?: ConversationCreateNestedManyWithoutUserInput
+    noteChunks?: NoteChunkCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutSubjectsInput = {
@@ -16182,6 +18179,7 @@ export namespace Prisma {
     tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     resources?: ResourceUncheckedCreateNestedManyWithoutUserInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutUserInput
+    noteChunks?: NoteChunkUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutSubjectsInput = {
@@ -16331,6 +18329,46 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type NoteChunkCreateWithoutSubjectInput = {
+    id?: string
+    source: $Enums.ChunkSource
+    sourceId: string
+    ordinal: number
+    breadcrumb: string
+    content: string
+    contentHash: string
+    embedding?: NoteChunkCreateembeddingInput | number[]
+    embeddingModel: string
+    dims: number
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutNoteChunksInput
+  }
+
+  export type NoteChunkUncheckedCreateWithoutSubjectInput = {
+    id?: string
+    userId: string
+    source: $Enums.ChunkSource
+    sourceId: string
+    ordinal: number
+    breadcrumb: string
+    content: string
+    contentHash: string
+    embedding?: NoteChunkCreateembeddingInput | number[]
+    embeddingModel: string
+    dims: number
+    createdAt?: Date | string
+  }
+
+  export type NoteChunkCreateOrConnectWithoutSubjectInput = {
+    where: NoteChunkWhereUniqueInput
+    create: XOR<NoteChunkCreateWithoutSubjectInput, NoteChunkUncheckedCreateWithoutSubjectInput>
+  }
+
+  export type NoteChunkCreateManySubjectInputEnvelope = {
+    data: NoteChunkCreateManySubjectInput | NoteChunkCreateManySubjectInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserUpsertWithoutSubjectsInput = {
     update: XOR<UserUpdateWithoutSubjectsInput, UserUncheckedUpdateWithoutSubjectsInput>
     create: XOR<UserCreateWithoutSubjectsInput, UserUncheckedCreateWithoutSubjectsInput>
@@ -16352,6 +18390,7 @@ export namespace Prisma {
     tasks?: TaskUpdateManyWithoutUserNestedInput
     resources?: ResourceUpdateManyWithoutUserNestedInput
     conversations?: ConversationUpdateManyWithoutUserNestedInput
+    noteChunks?: NoteChunkUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSubjectsInput = {
@@ -16364,6 +18403,7 @@ export namespace Prisma {
     tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     resources?: ResourceUncheckedUpdateManyWithoutUserNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutUserNestedInput
+    noteChunks?: NoteChunkUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type MilestoneUpsertWithWhereUniqueWithoutSubjectInput = {
@@ -16444,6 +18484,22 @@ export namespace Prisma {
     data: XOR<ConversationUpdateManyMutationInput, ConversationUncheckedUpdateManyWithoutSubjectInput>
   }
 
+  export type NoteChunkUpsertWithWhereUniqueWithoutSubjectInput = {
+    where: NoteChunkWhereUniqueInput
+    update: XOR<NoteChunkUpdateWithoutSubjectInput, NoteChunkUncheckedUpdateWithoutSubjectInput>
+    create: XOR<NoteChunkCreateWithoutSubjectInput, NoteChunkUncheckedCreateWithoutSubjectInput>
+  }
+
+  export type NoteChunkUpdateWithWhereUniqueWithoutSubjectInput = {
+    where: NoteChunkWhereUniqueInput
+    data: XOR<NoteChunkUpdateWithoutSubjectInput, NoteChunkUncheckedUpdateWithoutSubjectInput>
+  }
+
+  export type NoteChunkUpdateManyWithWhereWithoutSubjectInput = {
+    where: NoteChunkScalarWhereInput
+    data: XOR<NoteChunkUpdateManyMutationInput, NoteChunkUncheckedUpdateManyWithoutSubjectInput>
+  }
+
   export type SubjectCreateWithoutMilestonesInput = {
     id?: string
     title: string
@@ -16456,6 +18512,7 @@ export namespace Prisma {
     resources?: ResourceCreateNestedManyWithoutSubjectInput
     tasks?: TaskCreateNestedManyWithoutSubjectInput
     conversations?: ConversationCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectUncheckedCreateWithoutMilestonesInput = {
@@ -16470,6 +18527,7 @@ export namespace Prisma {
     resources?: ResourceUncheckedCreateNestedManyWithoutSubjectInput
     tasks?: TaskUncheckedCreateNestedManyWithoutSubjectInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkUncheckedCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectCreateOrConnectWithoutMilestonesInput = {
@@ -16548,6 +18606,7 @@ export namespace Prisma {
     resources?: ResourceUpdateManyWithoutSubjectNestedInput
     tasks?: TaskUpdateManyWithoutSubjectNestedInput
     conversations?: ConversationUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUpdateManyWithoutSubjectNestedInput
   }
 
   export type SubjectUncheckedUpdateWithoutMilestonesInput = {
@@ -16562,6 +18621,7 @@ export namespace Prisma {
     resources?: ResourceUncheckedUpdateManyWithoutSubjectNestedInput
     tasks?: TaskUncheckedUpdateManyWithoutSubjectNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUncheckedUpdateManyWithoutSubjectNestedInput
   }
 
   export type TaskUpsertWithWhereUniqueWithoutMilestoneInput = {
@@ -16590,6 +18650,7 @@ export namespace Prisma {
     subjects?: SubjectCreateNestedManyWithoutUserInput
     resources?: ResourceCreateNestedManyWithoutUserInput
     conversations?: ConversationCreateNestedManyWithoutUserInput
+    noteChunks?: NoteChunkCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTasksInput = {
@@ -16602,6 +18663,7 @@ export namespace Prisma {
     subjects?: SubjectUncheckedCreateNestedManyWithoutUserInput
     resources?: ResourceUncheckedCreateNestedManyWithoutUserInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutUserInput
+    noteChunks?: NoteChunkUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTasksInput = {
@@ -16621,6 +18683,7 @@ export namespace Prisma {
     milestones?: MilestoneCreateNestedManyWithoutSubjectInput
     resources?: ResourceCreateNestedManyWithoutSubjectInput
     conversations?: ConversationCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectUncheckedCreateWithoutTasksInput = {
@@ -16635,6 +18698,7 @@ export namespace Prisma {
     milestones?: MilestoneUncheckedCreateNestedManyWithoutSubjectInput
     resources?: ResourceUncheckedCreateNestedManyWithoutSubjectInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkUncheckedCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectCreateOrConnectWithoutTasksInput = {
@@ -16748,6 +18812,7 @@ export namespace Prisma {
     subjects?: SubjectUpdateManyWithoutUserNestedInput
     resources?: ResourceUpdateManyWithoutUserNestedInput
     conversations?: ConversationUpdateManyWithoutUserNestedInput
+    noteChunks?: NoteChunkUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTasksInput = {
@@ -16760,6 +18825,7 @@ export namespace Prisma {
     subjects?: SubjectUncheckedUpdateManyWithoutUserNestedInput
     resources?: ResourceUncheckedUpdateManyWithoutUserNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutUserNestedInput
+    noteChunks?: NoteChunkUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type SubjectUpsertWithoutTasksInput = {
@@ -16785,6 +18851,7 @@ export namespace Prisma {
     milestones?: MilestoneUpdateManyWithoutSubjectNestedInput
     resources?: ResourceUpdateManyWithoutSubjectNestedInput
     conversations?: ConversationUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUpdateManyWithoutSubjectNestedInput
   }
 
   export type SubjectUncheckedUpdateWithoutTasksInput = {
@@ -16799,6 +18866,7 @@ export namespace Prisma {
     milestones?: MilestoneUncheckedUpdateManyWithoutSubjectNestedInput
     resources?: ResourceUncheckedUpdateManyWithoutSubjectNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUncheckedUpdateManyWithoutSubjectNestedInput
   }
 
   export type MilestoneUpsertWithoutTasksInput = {
@@ -17108,6 +19176,7 @@ export namespace Prisma {
     subjects?: SubjectCreateNestedManyWithoutUserInput
     tasks?: TaskCreateNestedManyWithoutUserInput
     conversations?: ConversationCreateNestedManyWithoutUserInput
+    noteChunks?: NoteChunkCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutResourcesInput = {
@@ -17120,6 +19189,7 @@ export namespace Prisma {
     subjects?: SubjectUncheckedCreateNestedManyWithoutUserInput
     tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutUserInput
+    noteChunks?: NoteChunkUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutResourcesInput = {
@@ -17139,6 +19209,7 @@ export namespace Prisma {
     milestones?: MilestoneCreateNestedManyWithoutSubjectInput
     tasks?: TaskCreateNestedManyWithoutSubjectInput
     conversations?: ConversationCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectUncheckedCreateWithoutResourcesInput = {
@@ -17153,6 +19224,7 @@ export namespace Prisma {
     milestones?: MilestoneUncheckedCreateNestedManyWithoutSubjectInput
     tasks?: TaskUncheckedCreateNestedManyWithoutSubjectInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkUncheckedCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectCreateOrConnectWithoutResourcesInput = {
@@ -17181,6 +19253,7 @@ export namespace Prisma {
     subjects?: SubjectUpdateManyWithoutUserNestedInput
     tasks?: TaskUpdateManyWithoutUserNestedInput
     conversations?: ConversationUpdateManyWithoutUserNestedInput
+    noteChunks?: NoteChunkUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutResourcesInput = {
@@ -17193,6 +19266,7 @@ export namespace Prisma {
     subjects?: SubjectUncheckedUpdateManyWithoutUserNestedInput
     tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutUserNestedInput
+    noteChunks?: NoteChunkUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type SubjectUpsertWithoutResourcesInput = {
@@ -17218,6 +19292,7 @@ export namespace Prisma {
     milestones?: MilestoneUpdateManyWithoutSubjectNestedInput
     tasks?: TaskUpdateManyWithoutSubjectNestedInput
     conversations?: ConversationUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUpdateManyWithoutSubjectNestedInput
   }
 
   export type SubjectUncheckedUpdateWithoutResourcesInput = {
@@ -17232,6 +19307,7 @@ export namespace Prisma {
     milestones?: MilestoneUncheckedUpdateManyWithoutSubjectNestedInput
     tasks?: TaskUncheckedUpdateManyWithoutSubjectNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUncheckedUpdateManyWithoutSubjectNestedInput
   }
 
   export type TaskCreateWithoutTimerSessionsInput = {
@@ -17336,6 +19412,7 @@ export namespace Prisma {
     subjects?: SubjectCreateNestedManyWithoutUserInput
     tasks?: TaskCreateNestedManyWithoutUserInput
     resources?: ResourceCreateNestedManyWithoutUserInput
+    noteChunks?: NoteChunkCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutConversationsInput = {
@@ -17348,6 +19425,7 @@ export namespace Prisma {
     subjects?: SubjectUncheckedCreateNestedManyWithoutUserInput
     tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
     resources?: ResourceUncheckedCreateNestedManyWithoutUserInput
+    noteChunks?: NoteChunkUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutConversationsInput = {
@@ -17367,6 +19445,7 @@ export namespace Prisma {
     milestones?: MilestoneCreateNestedManyWithoutSubjectInput
     resources?: ResourceCreateNestedManyWithoutSubjectInput
     tasks?: TaskCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectUncheckedCreateWithoutConversationsInput = {
@@ -17381,6 +19460,7 @@ export namespace Prisma {
     milestones?: MilestoneUncheckedCreateNestedManyWithoutSubjectInput
     resources?: ResourceUncheckedCreateNestedManyWithoutSubjectInput
     tasks?: TaskUncheckedCreateNestedManyWithoutSubjectInput
+    noteChunks?: NoteChunkUncheckedCreateNestedManyWithoutSubjectInput
   }
 
   export type SubjectCreateOrConnectWithoutConversationsInput = {
@@ -17394,6 +19474,7 @@ export namespace Prisma {
     content: string
     model?: string | null
     createdAt?: Date | string
+    sources?: ChatMessageCreatesourcesInput | string[]
   }
 
   export type ChatMessageUncheckedCreateWithoutConversationInput = {
@@ -17402,6 +19483,7 @@ export namespace Prisma {
     content: string
     model?: string | null
     createdAt?: Date | string
+    sources?: ChatMessageCreatesourcesInput | string[]
   }
 
   export type ChatMessageCreateOrConnectWithoutConversationInput = {
@@ -17435,6 +19517,7 @@ export namespace Prisma {
     subjects?: SubjectUpdateManyWithoutUserNestedInput
     tasks?: TaskUpdateManyWithoutUserNestedInput
     resources?: ResourceUpdateManyWithoutUserNestedInput
+    noteChunks?: NoteChunkUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutConversationsInput = {
@@ -17447,6 +19530,7 @@ export namespace Prisma {
     subjects?: SubjectUncheckedUpdateManyWithoutUserNestedInput
     tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
     resources?: ResourceUncheckedUpdateManyWithoutUserNestedInput
+    noteChunks?: NoteChunkUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type SubjectUpsertWithoutConversationsInput = {
@@ -17472,6 +19556,7 @@ export namespace Prisma {
     milestones?: MilestoneUpdateManyWithoutSubjectNestedInput
     resources?: ResourceUpdateManyWithoutSubjectNestedInput
     tasks?: TaskUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUpdateManyWithoutSubjectNestedInput
   }
 
   export type SubjectUncheckedUpdateWithoutConversationsInput = {
@@ -17486,6 +19571,7 @@ export namespace Prisma {
     milestones?: MilestoneUncheckedUpdateManyWithoutSubjectNestedInput
     resources?: ResourceUncheckedUpdateManyWithoutSubjectNestedInput
     tasks?: TaskUncheckedUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUncheckedUpdateManyWithoutSubjectNestedInput
   }
 
   export type ChatMessageUpsertWithWhereUniqueWithoutConversationInput = {
@@ -17513,6 +19599,7 @@ export namespace Prisma {
     content?: StringFilter<"ChatMessage"> | string
     model?: StringNullableFilter<"ChatMessage"> | string | null
     createdAt?: DateTimeFilter<"ChatMessage"> | Date | string
+    sources?: StringNullableListFilter<"ChatMessage">
     conversationId?: StringFilter<"ChatMessage"> | string
   }
 
@@ -17572,6 +19659,150 @@ export namespace Prisma {
     contextSubjectIds?: ConversationUpdatecontextSubjectIdsInput | string[]
   }
 
+  export type UserCreateWithoutNoteChunksInput = {
+    id?: string
+    email: string
+    name?: string | null
+    password?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    subjects?: SubjectCreateNestedManyWithoutUserInput
+    tasks?: TaskCreateNestedManyWithoutUserInput
+    resources?: ResourceCreateNestedManyWithoutUserInput
+    conversations?: ConversationCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutNoteChunksInput = {
+    id?: string
+    email: string
+    name?: string | null
+    password?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    subjects?: SubjectUncheckedCreateNestedManyWithoutUserInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutUserInput
+    resources?: ResourceUncheckedCreateNestedManyWithoutUserInput
+    conversations?: ConversationUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutNoteChunksInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutNoteChunksInput, UserUncheckedCreateWithoutNoteChunksInput>
+  }
+
+  export type SubjectCreateWithoutNoteChunksInput = {
+    id?: string
+    title: string
+    description?: string | null
+    color?: string | null
+    isArchived?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutSubjectsInput
+    milestones?: MilestoneCreateNestedManyWithoutSubjectInput
+    resources?: ResourceCreateNestedManyWithoutSubjectInput
+    tasks?: TaskCreateNestedManyWithoutSubjectInput
+    conversations?: ConversationCreateNestedManyWithoutSubjectInput
+  }
+
+  export type SubjectUncheckedCreateWithoutNoteChunksInput = {
+    id?: string
+    title: string
+    description?: string | null
+    color?: string | null
+    isArchived?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    userId: string
+    milestones?: MilestoneUncheckedCreateNestedManyWithoutSubjectInput
+    resources?: ResourceUncheckedCreateNestedManyWithoutSubjectInput
+    tasks?: TaskUncheckedCreateNestedManyWithoutSubjectInput
+    conversations?: ConversationUncheckedCreateNestedManyWithoutSubjectInput
+  }
+
+  export type SubjectCreateOrConnectWithoutNoteChunksInput = {
+    where: SubjectWhereUniqueInput
+    create: XOR<SubjectCreateWithoutNoteChunksInput, SubjectUncheckedCreateWithoutNoteChunksInput>
+  }
+
+  export type UserUpsertWithoutNoteChunksInput = {
+    update: XOR<UserUpdateWithoutNoteChunksInput, UserUncheckedUpdateWithoutNoteChunksInput>
+    create: XOR<UserCreateWithoutNoteChunksInput, UserUncheckedCreateWithoutNoteChunksInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutNoteChunksInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutNoteChunksInput, UserUncheckedUpdateWithoutNoteChunksInput>
+  }
+
+  export type UserUpdateWithoutNoteChunksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    subjects?: SubjectUpdateManyWithoutUserNestedInput
+    tasks?: TaskUpdateManyWithoutUserNestedInput
+    resources?: ResourceUpdateManyWithoutUserNestedInput
+    conversations?: ConversationUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutNoteChunksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    subjects?: SubjectUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutUserNestedInput
+    resources?: ResourceUncheckedUpdateManyWithoutUserNestedInput
+    conversations?: ConversationUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type SubjectUpsertWithoutNoteChunksInput = {
+    update: XOR<SubjectUpdateWithoutNoteChunksInput, SubjectUncheckedUpdateWithoutNoteChunksInput>
+    create: XOR<SubjectCreateWithoutNoteChunksInput, SubjectUncheckedCreateWithoutNoteChunksInput>
+    where?: SubjectWhereInput
+  }
+
+  export type SubjectUpdateToOneWithWhereWithoutNoteChunksInput = {
+    where?: SubjectWhereInput
+    data: XOR<SubjectUpdateWithoutNoteChunksInput, SubjectUncheckedUpdateWithoutNoteChunksInput>
+  }
+
+  export type SubjectUpdateWithoutNoteChunksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    color?: NullableStringFieldUpdateOperationsInput | string | null
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutSubjectsNestedInput
+    milestones?: MilestoneUpdateManyWithoutSubjectNestedInput
+    resources?: ResourceUpdateManyWithoutSubjectNestedInput
+    tasks?: TaskUpdateManyWithoutSubjectNestedInput
+    conversations?: ConversationUpdateManyWithoutSubjectNestedInput
+  }
+
+  export type SubjectUncheckedUpdateWithoutNoteChunksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    color?: NullableStringFieldUpdateOperationsInput | string | null
+    isArchived?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: StringFieldUpdateOperationsInput | string
+    milestones?: MilestoneUncheckedUpdateManyWithoutSubjectNestedInput
+    resources?: ResourceUncheckedUpdateManyWithoutSubjectNestedInput
+    tasks?: TaskUncheckedUpdateManyWithoutSubjectNestedInput
+    conversations?: ConversationUncheckedUpdateManyWithoutSubjectNestedInput
+  }
+
   export type SubjectCreateManyUserInput = {
     id?: string
     title: string
@@ -17619,6 +19850,21 @@ export namespace Prisma {
     contextSubjectIds?: ConversationCreatecontextSubjectIdsInput | string[]
   }
 
+  export type NoteChunkCreateManyUserInput = {
+    id?: string
+    subjectId: string
+    source: $Enums.ChunkSource
+    sourceId: string
+    ordinal: number
+    breadcrumb: string
+    content: string
+    contentHash: string
+    embedding?: NoteChunkCreateembeddingInput | number[]
+    embeddingModel: string
+    dims: number
+    createdAt?: Date | string
+  }
+
   export type SubjectUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
@@ -17631,6 +19877,7 @@ export namespace Prisma {
     resources?: ResourceUpdateManyWithoutSubjectNestedInput
     tasks?: TaskUpdateManyWithoutSubjectNestedInput
     conversations?: ConversationUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUpdateManyWithoutSubjectNestedInput
   }
 
   export type SubjectUncheckedUpdateWithoutUserInput = {
@@ -17645,6 +19892,7 @@ export namespace Prisma {
     resources?: ResourceUncheckedUpdateManyWithoutSubjectNestedInput
     tasks?: TaskUncheckedUpdateManyWithoutSubjectNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutSubjectNestedInput
+    noteChunks?: NoteChunkUncheckedUpdateManyWithoutSubjectNestedInput
   }
 
   export type SubjectUncheckedUpdateManyWithoutUserInput = {
@@ -17774,6 +20022,51 @@ export namespace Prisma {
     contextSubjectIds?: ConversationUpdatecontextSubjectIdsInput | string[]
   }
 
+  export type NoteChunkUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    source?: EnumChunkSourceFieldUpdateOperationsInput | $Enums.ChunkSource
+    sourceId?: StringFieldUpdateOperationsInput | string
+    ordinal?: IntFieldUpdateOperationsInput | number
+    breadcrumb?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    contentHash?: StringFieldUpdateOperationsInput | string
+    embedding?: NoteChunkUpdateembeddingInput | number[]
+    embeddingModel?: StringFieldUpdateOperationsInput | string
+    dims?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    subject?: SubjectUpdateOneRequiredWithoutNoteChunksNestedInput
+  }
+
+  export type NoteChunkUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subjectId?: StringFieldUpdateOperationsInput | string
+    source?: EnumChunkSourceFieldUpdateOperationsInput | $Enums.ChunkSource
+    sourceId?: StringFieldUpdateOperationsInput | string
+    ordinal?: IntFieldUpdateOperationsInput | number
+    breadcrumb?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    contentHash?: StringFieldUpdateOperationsInput | string
+    embedding?: NoteChunkUpdateembeddingInput | number[]
+    embeddingModel?: StringFieldUpdateOperationsInput | string
+    dims?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteChunkUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subjectId?: StringFieldUpdateOperationsInput | string
+    source?: EnumChunkSourceFieldUpdateOperationsInput | $Enums.ChunkSource
+    sourceId?: StringFieldUpdateOperationsInput | string
+    ordinal?: IntFieldUpdateOperationsInput | number
+    breadcrumb?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    contentHash?: StringFieldUpdateOperationsInput | string
+    embedding?: NoteChunkUpdateembeddingInput | number[]
+    embeddingModel?: StringFieldUpdateOperationsInput | string
+    dims?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type MilestoneCreateManySubjectInput = {
     id?: string
     title: string
@@ -17819,6 +20112,21 @@ export namespace Prisma {
     updatedAt?: Date | string
     userId: string
     contextSubjectIds?: ConversationCreatecontextSubjectIdsInput | string[]
+  }
+
+  export type NoteChunkCreateManySubjectInput = {
+    id?: string
+    userId: string
+    source: $Enums.ChunkSource
+    sourceId: string
+    ordinal: number
+    breadcrumb: string
+    content: string
+    contentHash: string
+    embedding?: NoteChunkCreateembeddingInput | number[]
+    embeddingModel: string
+    dims: number
+    createdAt?: Date | string
   }
 
   export type MilestoneUpdateWithoutSubjectInput = {
@@ -17968,6 +20276,51 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: StringFieldUpdateOperationsInput | string
     contextSubjectIds?: ConversationUpdatecontextSubjectIdsInput | string[]
+  }
+
+  export type NoteChunkUpdateWithoutSubjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    source?: EnumChunkSourceFieldUpdateOperationsInput | $Enums.ChunkSource
+    sourceId?: StringFieldUpdateOperationsInput | string
+    ordinal?: IntFieldUpdateOperationsInput | number
+    breadcrumb?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    contentHash?: StringFieldUpdateOperationsInput | string
+    embedding?: NoteChunkUpdateembeddingInput | number[]
+    embeddingModel?: StringFieldUpdateOperationsInput | string
+    dims?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutNoteChunksNestedInput
+  }
+
+  export type NoteChunkUncheckedUpdateWithoutSubjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    source?: EnumChunkSourceFieldUpdateOperationsInput | $Enums.ChunkSource
+    sourceId?: StringFieldUpdateOperationsInput | string
+    ordinal?: IntFieldUpdateOperationsInput | number
+    breadcrumb?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    contentHash?: StringFieldUpdateOperationsInput | string
+    embedding?: NoteChunkUpdateembeddingInput | number[]
+    embeddingModel?: StringFieldUpdateOperationsInput | string
+    dims?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteChunkUncheckedUpdateManyWithoutSubjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    source?: EnumChunkSourceFieldUpdateOperationsInput | $Enums.ChunkSource
+    sourceId?: StringFieldUpdateOperationsInput | string
+    ordinal?: IntFieldUpdateOperationsInput | number
+    breadcrumb?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    contentHash?: StringFieldUpdateOperationsInput | string
+    embedding?: NoteChunkUpdateembeddingInput | number[]
+    embeddingModel?: StringFieldUpdateOperationsInput | string
+    dims?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type TaskCreateManyMilestoneInput = {
@@ -18168,6 +20521,7 @@ export namespace Prisma {
     content: string
     model?: string | null
     createdAt?: Date | string
+    sources?: ChatMessageCreatesourcesInput | string[]
   }
 
   export type ChatMessageUpdateWithoutConversationInput = {
@@ -18176,6 +20530,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     model?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sources?: ChatMessageUpdatesourcesInput | string[]
   }
 
   export type ChatMessageUncheckedUpdateWithoutConversationInput = {
@@ -18184,6 +20539,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     model?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sources?: ChatMessageUpdatesourcesInput | string[]
   }
 
   export type ChatMessageUncheckedUpdateManyWithoutConversationInput = {
@@ -18192,6 +20548,7 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     model?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sources?: ChatMessageUpdatesourcesInput | string[]
   }
 
 
