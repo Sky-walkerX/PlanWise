@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDigest, estimateTokens, renderSubject } from "./context";
+import { buildDigest, buildOutline, demoteHeadings, estimateTokens, renderSubject } from "./context";
 import { FULL_DETAIL, type ContextSubject, type DigestOptions } from "./types";
 
 const lean = (over: Partial<DigestOptions> = {}): DigestOptions => ({
@@ -190,6 +190,44 @@ describe("detail tiers", () => {
     expect(out).toContain("Memory management");
     expect(out).toContain("Solve past-year questions");
     expect(out).toContain("Revise virtual memory");
+  });
+});
+
+describe("buildOutline", () => {
+  it("returns an empty string when nothing is selected", () => {
+    expect(buildOutline([])).toBe("");
+  });
+
+  it("omits note bodies and keeps structure and progress counts", () => {
+    const out = buildOutline([osSubject]);
+
+    expect(out).toContain("## Plan outline");
+    expect(out).toContain("### Operating Systems");
+    expect(out).toContain("- Memory management — 1/2 done");
+    expect(out).not.toContain("Paging vs segmentation");
+    expect(out).not.toContain("Processes, memory, filesystems for GATE.");
+  });
+
+  it("lists open tasks but collapses completed ones into the progress count", () => {
+    const out = buildOutline([osSubject]);
+    expect(out).toContain("- [ ] Solve past-year questions");
+    expect(out).not.toContain("Read Ch. 8");
+  });
+
+  it("includes loose (no-milestone) open tasks", () => {
+    const out = buildOutline([osSubject]);
+    expect(out).toContain("- [ ] Revise virtual memory");
+  });
+
+  it("keeps subject and milestone titles for an otherwise empty subject", () => {
+    const out = buildOutline([{ id: "s2", title: "Networks" }]);
+    expect(out).toContain("### Networks");
+  });
+});
+
+describe("demoteHeadings", () => {
+  it("is exported for reuse where passages are injected outside the digest", () => {
+    expect(demoteHeadings("## Title\ntext")).toBe("##### Title\ntext");
   });
 });
 

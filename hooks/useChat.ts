@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChatMessage, Conversation } from "@/app/generated/prisma";
 import { api } from "@/lib/fetcher";
-import type { BudgetReport, PromptMessage } from "@/lib/chat/types";
-import { LlmError, streamCompletion } from "@/lib/llm/client";
-import { loadSettings } from "@/lib/llm/settings";
+import type { PromptMessage } from "@/lib/chat/types";
+import type { RetrievalBudget } from "@/lib/chat/retrieve";
+import { createOpenAiTransport, LlmError } from "@/lib/llm/client";
+import { effectiveContextTokens, loadSettings, type LlmSettings } from "@/lib/llm/settings";
+import { EMBEDDING_DIMS, EMBEDDING_MODEL } from "@/lib/rag/embedding-model";
 
 export type ConversationSummary = Pick<
   Conversation,
@@ -15,7 +17,7 @@ export type ConversationSummary = Pick<
 
 export type ConversationDetail = Conversation & { messages: ChatMessage[] };
 
-type PrepareResponse = { messages: PromptMessage[]; budget: BudgetReport };
+type PrepareResponse = { messages: PromptMessage[]; budget: RetrievalBudget };
 
 export function useConversations() {
   return useQuery({
@@ -74,7 +76,7 @@ export function useSendMessage() {
   const [streamText, setStreamText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [budget, setBudget] = useState<BudgetReport | null>(null);
+  const [budget, setBudget] = useState<RetrievalBudget | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const stop = useCallback(() => abortRef.current?.abort(), []);
@@ -89,32 +91,61 @@ export function useSendMessage() {
       setStreamText("");
       setIsStreaming(true);
 
+      // Embedding the query is independent of which chat transport is
+      // selected — retrieval helps the Ollama path too (§14 build sequence,
+      // phases 1–4). `prepare` falls back to digest mode on its own when this
+      // comes back undefined, so a failed or unavailable embedder just means
+      // no retrieval this turn, not a broken send.
+      let queryEmbedding: number[] | undefined;
+      if (settings.ragEnabled) {
+        try {
+          const { embedQuery, checkWebGPU } = await import("@/lib/llm/webllm-transport");
+          const { available } = await checkWebGPU();
+          if (available) queryEmbedding = await embedQuery(settings.webllmModel, content);
+        } catch {
+          // Degrades to digest mode server-side; nothing to surface here.
+        }
+      }
+
       let streamed = "";
+      let sources: string[] = [];
       try {
         const prepared = await api.post<PrepareResponse>(
           `/api/chat/conversations/${conversationId}/prepare`,
-          { content, contextTokens: settings.contextTokens },
+          {
+            content,
+            contextTokens: effectiveContextTokens(settings),
+            queryEmbedding,
+            ragEnabled: settings.ragEnabled,
+          },
         );
         setBudget(prepared.budget);
+        sources = prepared.budget.sources.map((s) => s.breadcrumb);
 
         // Show the question immediately; `prepare` has already stored it.
         qc.invalidateQueries({ queryKey: ["conversation", conversationId] });
 
-        streamed = await streamCompletion({
-          settings,
-          messages: prepared.messages,
-          signal: controller.signal,
-          onToken: (token) => {
-            streamed += token;
-            setStreamText((prev) => prev + token);
-          },
-        });
+        const transport =
+          settings.provider === "webllm"
+            ? (await import("@/lib/llm/webllm-transport")).createWebllmTransport(settings.webllmModel)
+            : createOpenAiTransport(settings);
+
+        for await (const token of transport.streamChat(prepared.messages, { signal: controller.signal })) {
+          streamed += token;
+          setStreamText((prev) => prev + token);
+        }
       } catch (err) {
         const aborted = err instanceof DOMException && err.name === "AbortError";
         if (!aborted) {
           // Nothing is persisted on failure, so the thread ends on the user's
           // question — which `prepare` recognises as a retry.
-          setError(err instanceof LlmError || err instanceof Error ? err.message : "Something went wrong.");
+          setError(
+            err instanceof LlmError || err instanceof Error
+              ? err.message
+              : typeof err === "string"
+                ? err
+                : "Something went wrong.",
+          );
           setIsStreaming(false);
           setStreamText("");
           return;
@@ -126,7 +157,8 @@ export function useSendMessage() {
       if (streamed.trim()) {
         await api.post<ChatMessage>(`/api/chat/conversations/${conversationId}/messages`, {
           content: streamed,
-          model: settings.model,
+          model: settings.provider === "webllm" ? settings.webllmModel : settings.model,
+          sources,
         });
       }
 
@@ -139,4 +171,94 @@ export function useSendMessage() {
   );
 
   return { send, stop, streamText, isStreaming, error, budget, clearError: () => setError(null) };
+}
+
+export type RagStatus = { total: number; indexed: number; stale: number; orphaned: number; model: string; dims: number };
+
+type PendingChunk = {
+  source: string;
+  sourceId: string;
+  subjectId: string;
+  ordinal: number;
+  breadcrumb: string;
+  content: string;
+  contentHash: string;
+};
+
+export function useRagStatus(enabled: boolean) {
+  return useQuery({
+    queryKey: ["rag-status"],
+    queryFn: () => api.get<RagStatus>("/api/rag/status"),
+    enabled,
+    staleTime: 15_000,
+  });
+}
+
+/**
+ * The indexing loop (§7.3): status drives whether there's stale work, and
+ * while there is, this repeatedly asks for a batch of pre-chunked pending
+ * passages, embeds them with the fixed embedder, and writes them back — until
+ * a pass returns nothing pending. Lazy and background, per the design: no
+ * cron, no queue, because there's no server-side model to run one with.
+ */
+export function useIndexing(settings: LlmSettings) {
+  const qc = useQueryClient();
+  const [webGpuAvailable, setWebGpuAvailable] = useState<boolean | null>(null);
+  const [isIndexing, setIsIndexing] = useState(false);
+  const [indexedThisRun, setIndexedThisRun] = useState(0);
+  const runningRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    import("@/lib/llm/webllm-transport").then(async ({ checkWebGPU }) => {
+      const { available } = await checkWebGPU();
+      if (!cancelled) setWebGpuAvailable(available);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const enabled = settings.ragEnabled && webGpuAvailable === true;
+  const { data: status, refetch } = useRagStatus(enabled);
+
+  useEffect(() => {
+    if (!enabled || !status || status.stale === 0 || runningRef.current) return;
+    runningRef.current = true;
+    setIsIndexing(true);
+    setIndexedThisRun(0);
+
+    (async () => {
+      const { embedPassages } = await import("@/lib/llm/webllm-transport");
+      try {
+        for (;;) {
+          const pending = await api.get<PendingChunk[]>("/api/rag/pending?limit=20");
+          if (pending.length === 0) break;
+
+          // §7.2: the embedder sees the breadcrumb, two newlines, then the content.
+          const texts = pending.map((c) => `${c.breadcrumb}\n\n${c.content}`);
+          const embeddings = await embedPassages(settings.webllmModel, texts);
+
+          const { written } = await api.post<{ written: number }>("/api/rag/chunks", {
+            model: EMBEDDING_MODEL,
+            dims: EMBEDDING_DIMS,
+            chunks: pending.map((c, i) => ({ ...c, embedding: embeddings[i] })),
+          });
+          setIndexedThisRun((n) => n + written);
+        }
+      } finally {
+        runningRef.current = false;
+        setIsIndexing(false);
+        refetch();
+        qc.invalidateQueries({ queryKey: ["rag-status"] });
+      }
+    })();
+  }, [enabled, status, settings.webllmModel, refetch, qc]);
+
+  const rebuild = useCallback(async () => {
+    await api.del("/api/rag/chunks");
+    await refetch();
+  }, [refetch]);
+
+  return { enabled, webGpuAvailable, status, isIndexing, indexedThisRun, rebuild };
 }

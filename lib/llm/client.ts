@@ -1,4 +1,5 @@
 import type { PromptMessage } from "@/lib/chat/types";
+import type { ChatTransport, StreamOpts } from "./transport";
 import { normalizeBaseUrl, type LlmSettings } from "./settings";
 
 /**
@@ -158,4 +159,67 @@ export async function streamCompletion({
   }
 
   return full;
+}
+
+/**
+ * Bridges `streamCompletion`'s callback style to `ChatTransport`'s
+ * `AsyncIterable`. `streamCompletion` itself is unchanged — this only adapts
+ * how its tokens are consumed, via a small resolve-queue: tokens pushed by
+ * `onToken` wake a generator that's parked awaiting the next one.
+ */
+async function* streamTokens(settings: LlmSettings, messages: PromptMessage[], opts: StreamOpts): AsyncGenerator<string> {
+  const queue: string[] = [];
+  let done = false;
+  let failure: unknown = null;
+  let wake: (() => void) | null = null;
+
+  const notify = () => {
+    if (wake) {
+      const fn = wake;
+      wake = null;
+      fn();
+    }
+  };
+
+  streamCompletion({
+    settings,
+    messages,
+    signal: opts.signal,
+    onToken: (token) => {
+      queue.push(token);
+      notify();
+    },
+  })
+    .then(() => {
+      done = true;
+      notify();
+    })
+    .catch((error) => {
+      failure = error;
+      done = true;
+      notify();
+    });
+
+  while (true) {
+    if (queue.length > 0) {
+      yield queue.shift()!;
+      continue;
+    }
+    if (done) {
+      if (failure) throw failure;
+      return;
+    }
+    await new Promise<void>((resolve) => {
+      wake = resolve;
+    });
+  }
+}
+
+/** The local-server transport: an OpenAI-compatible endpoint on the user's
+ *  own machine, wrapped to satisfy `ChatTransport`. */
+export function createOpenAiTransport(settings: LlmSettings): ChatTransport {
+  return {
+    listModels: () => listModels(settings),
+    streamChat: (messages, opts) => streamTokens(settings, messages, opts),
+  };
 }

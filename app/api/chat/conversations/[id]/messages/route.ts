@@ -6,6 +6,9 @@ import { z } from "zod";
 const MessageSchema = z.object({
   content: z.string().min(1),
   model: z.string().optional(),
+  // Breadcrumbs of the passages retrieval selected for this reply, so history
+  // shows what an old answer cited. Empty on digest-mode replies.
+  sources: z.array(z.string()).optional(),
 });
 
 /**
@@ -39,6 +42,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       role: "ASSISTANT",
       content: parsed.data.content,
       model: parsed.data.model ?? null,
+      sources: parsed.data.sources ?? [],
     },
   });
 
