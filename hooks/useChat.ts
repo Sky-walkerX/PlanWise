@@ -99,8 +99,9 @@ export function useSendMessage() {
       let queryEmbedding: number[] | undefined;
       if (settings.ragEnabled) {
         try {
-          const { embedQuery, hasWebGPU } = await import("@/lib/llm/webllm-transport");
-          if (hasWebGPU()) queryEmbedding = await embedQuery(settings.webllmModel, content);
+          const { embedQuery, checkWebGPU } = await import("@/lib/llm/webllm-transport");
+          const { available } = await checkWebGPU();
+          if (available) queryEmbedding = await embedQuery(settings.webllmModel, content);
         } catch {
           // Degrades to digest mode server-side; nothing to surface here.
         }

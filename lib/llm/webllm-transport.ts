@@ -45,13 +45,41 @@ export async function checkWebGPU(): Promise<{ available: boolean; reason?: stri
         reason: "This browser does not expose the WebGPU API. Use a local server instead.",
       };
     }
-    const adapter = await gpu.requestAdapter();
+    const adapter = (await gpu.requestAdapter()) as {
+      limits?: {
+        maxStorageBuffersPerShaderStage?: number;
+        maxBufferSize?: number;
+        maxStorageBufferBindingSize?: number;
+        maxComputeWorkgroupStorageSize?: number;
+      };
+    } | null;
+
     if (!adapter) {
       return {
         available: false,
         reason: "No compatible GPU or WebGPU adapter found on this machine. Use a local server instead.",
       };
     }
+
+    const limits = adapter.limits;
+    if (limits) {
+      if (
+        typeof limits.maxStorageBuffersPerShaderStage === "number" &&
+        limits.maxStorageBuffersPerShaderStage < 10
+      ) {
+        return {
+          available: false,
+          reason: `This browser's WebGPU limit (maxStorageBuffersPerShaderStage: ${limits.maxStorageBuffersPerShaderStage}) is below WebLLM's requirement of 10. Switch to Chrome or Edge, or use a local server.`,
+        };
+      }
+      if (typeof limits.maxBufferSize === "number" && limits.maxBufferSize < 1 << 28) {
+        return {
+          available: false,
+          reason: "This browser's WebGPU buffer size limit is too low for in-browser models. Use a local server instead.",
+        };
+      }
+    }
+
     return { available: true };
   } catch (err) {
     const reason = typeof err === "string" ? err : err instanceof Error ? err.message : String(err);
@@ -71,6 +99,12 @@ let enginePromise: Promise<WebWorkerMLCEngine> | null = null;
 let loadedChatModel: string | null = null;
 
 function normalizeError(err: unknown): Error {
+  const str = err instanceof Error ? err.message : typeof err === "string" ? err : String(err || "");
+  if (str.includes("maxStorageBuffersPerShaderStage")) {
+    return new Error(
+      "This browser's WebGPU storage buffer limit is too low for WebLLM (requires 10). Switch to Chrome or Edge, or use a local server.",
+    );
+  }
   if (err instanceof Error) return err;
   if (typeof err === "string") return new Error(err);
   return new Error(String(err || "Failed to load the model."));
