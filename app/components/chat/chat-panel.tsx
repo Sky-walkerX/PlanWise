@@ -6,6 +6,7 @@ import { History, Send, Settings, Square, X } from "lucide-react";
 import {
   useConversation,
   useCreateConversation,
+  useIndexing,
   useSendMessage,
   useUpdateConversation,
 } from "@/hooks/useChat";
@@ -13,6 +14,7 @@ import { isConfigured, loadSettings, type LlmSettings } from "@/lib/llm/settings
 import { DEFAULT_SETTINGS } from "@/lib/llm/settings";
 import { ContextPicker } from "./context-picker";
 import { HistoryList } from "./history-list";
+import { IndexStatus } from "./index-status";
 import { MessageList } from "./message-list";
 import { SettingsSheet } from "./settings-sheet";
 
@@ -40,6 +42,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   const updateConversation = useUpdateConversation();
   const { data: conversation } = useConversation(conversationId ?? undefined);
   const { send, stop, streamText, isStreaming, error, budget } = useSendMessage();
+  const indexing = useIndexing(settings);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -96,9 +99,18 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
     const used = budget.estimatedTokens >= 1000
       ? `${(budget.estimatedTokens / 1000).toFixed(1)}k`
       : `${budget.estimatedTokens}`;
-    const ceiling = `${Math.round(budget.ceiling / 1000)}k`;
-    const subjects = `${budget.subjectCount} subject${budget.subjectCount === 1 ? "" : "s"}`;
-    return { used, ceiling, subjects, truncated: budget.truncated };
+    const ceiling = budget.ceiling >= 1000 ? `${Math.round(budget.ceiling / 1000)}k` : `${budget.ceiling}`;
+
+    // Retrieval mode reads "8 passages from 3 subjects" — the subject count
+    // comes from what was actually cited, not the outline's subject count.
+    const scope =
+      budget.mode === "retrieval"
+        ? `${budget.sources.length} passage${budget.sources.length === 1 ? "" : "s"} from ${
+            new Set(budget.sources.map((s) => s.breadcrumb.split(" > ")[0])).size
+          } subject${new Set(budget.sources.map((s) => s.breadcrumb.split(" > ")[0])).size === 1 ? "" : "s"}`
+        : `${budget.subjectCount} subject${budget.subjectCount === 1 ? "" : "s"}`;
+
+    return { used, ceiling, scope, truncated: budget.truncated, degraded: budget.degraded };
   }, [budget]);
 
   return (
@@ -117,7 +129,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
           <div className="flex min-w-0 items-center gap-2">
             <span className="lk-display text-sm font-black tracking-tight">Ask</span>
             <span className="lk-mono truncate text-[10.5px] uppercase tracking-wide text-muted-foreground">
-              {ready ? settings.model : "not connected"}
+              {ready ? (settings.provider === "webllm" ? settings.webllmModel : settings.model) : "not connected"}
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -165,6 +177,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
 
         {view === "chat" && (
           <>
+            <IndexStatus indexing={indexing} />
             <MessageList
               messages={messages}
               streamText={streamText}
@@ -212,7 +225,8 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
 
               {budgetLine && (
                 <p className="lk-mono mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">
-                  ctx {budgetLine.used}/{budgetLine.ceiling} · {budgetLine.subjects}
+                  ctx {budgetLine.used}/{budgetLine.ceiling} · {budgetLine.scope}
+                  {budgetLine.degraded && <span className="text-destructive"> · notes not searched this turn</span>}
                   {budgetLine.truncated.length > 0 && (
                     <span className="text-destructive"> · left out {budgetLine.truncated.join(", ")}</span>
                   )}
