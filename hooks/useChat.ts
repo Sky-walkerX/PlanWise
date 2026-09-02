@@ -8,6 +8,7 @@ import type { PromptMessage } from "@/lib/chat/types";
 import type { RetrievalBudget } from "@/lib/chat/retrieve";
 import { streamingPrefix } from "@/lib/chat/stream-buffer";
 import { acquireEngine } from "@/lib/llm/engine-lock";
+import type { EmbedderBackend } from "@/lib/llm/embedder";
 import { createOpenAiTransport, LlmError } from "@/lib/llm/client";
 import { effectiveContextTokens, loadSettings, type LlmSettings } from "@/lib/llm/settings";
 import { EMBEDDING_DIMS, EMBEDDING_MODEL } from "@/lib/rag/embedding-model";
@@ -149,18 +150,16 @@ export function useSendMessage() {
       if (settings.ragEnabled) {
         setPhase("embedding");
         try {
-          const { embedQuery, checkWebGPU } = await import("@/lib/llm/webllm-transport");
-          const { available } = await checkWebGPU();
-          if (available) {
-            queryEmbedding = await embedQuery(
-              // Null keeps the engine down to the embedder alone when chat
-              // runs against a local server; loading a chat model that will
-              // never generate a token would cost about 1.1 GB.
-              settings.provider === "webllm" ? settings.webllmModel : null,
-              content,
-              (report) => setPhaseDetail(describeProgress(report.progress)),
-            );
-          }
+          const { getEmbedder } = await import("@/lib/llm/embedder");
+          const embedder = await getEmbedder(
+            // Null keeps the WebGPU engine down to the embedder alone when
+            // chat runs against a local server; loading a chat model that
+            // will never generate a token would cost about 1.1 GB. Ignored
+            // entirely on the CPU path.
+            settings.provider === "webllm" ? settings.webllmModel : null,
+            (report) => setPhaseDetail(describeProgress(report.progress)),
+          );
+          queryEmbedding = await embedder?.embedQuery(content);
         } catch {
           // Degrades to digest mode server-side; nothing to surface here.
         }
@@ -299,23 +298,32 @@ export function useRagStatus(enabled: boolean) {
  */
 export function useIndexing(settings: LlmSettings) {
   const qc = useQueryClient();
-  const [webGpuAvailable, setWebGpuAvailable] = useState<boolean | null>(null);
+  const [backend, setBackend] = useState<EmbedderBackend | null>(null);
   const [isIndexing, setIsIndexing] = useState(false);
   const [indexedThisRun, setIndexedThisRun] = useState(0);
   const runningRef = useRef(false);
 
+  // Which runtime will do the embedding. Probing costs a `requestAdapter`
+  // (cached) and a dynamic import; it does not load any weights.
   useEffect(() => {
     let cancelled = false;
-    import("@/lib/llm/webllm-transport").then(async ({ checkWebGPU }) => {
-      const { available } = await checkWebGPU();
-      if (!cancelled) setWebGpuAvailable(available);
-    });
+    import("@/lib/llm/webllm-transport")
+      .then(async ({ checkWebGPU }) => {
+        const { available } = await checkWebGPU();
+        if (cancelled) return;
+        if (available) return setBackend("webgpu");
+        const { hasWasm } = await import("@/lib/llm/wasm-embedder");
+        if (!cancelled) setBackend(hasWasm() ? "wasm" : null);
+      })
+      .catch(() => {
+        if (!cancelled) setBackend(null);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const enabled = settings.ragEnabled && webGpuAvailable === true;
+  const enabled = settings.ragEnabled && backend !== null;
   const { data: status, refetch } = useRagStatus(enabled);
 
   // Chunks whose source record is gone. Deleting them is a write, so it no
@@ -342,13 +350,19 @@ export function useIndexing(settings: LlmSettings) {
     setIsIndexing(true);
     setIndexedThisRun(0);
 
-    // Closing the panel mid-index shouldn't leave the GPU embedding passages
+    // Closing the panel mid-index shouldn't leave a runtime embedding passages
     // for a component that no longer exists.
     let cancelled = false;
 
     (async () => {
-      const { embedPassages } = await import("@/lib/llm/webllm-transport");
+      const { getEmbedder } = await import("@/lib/llm/embedder");
       try {
+        const embedder = await getEmbedder(
+          // Only a WebLLM chat user needs the chat weights in this engine.
+          settings.provider === "webllm" ? settings.webllmModel : null,
+        );
+        if (!embedder || cancelled) return;
+
         for (;;) {
           if (cancelled) break;
 
@@ -357,11 +371,7 @@ export function useIndexing(settings: LlmSettings) {
 
           // §7.2: the embedder sees the breadcrumb, two newlines, then the content.
           const texts = pending.map((c) => `${c.breadcrumb}\n\n${c.content}`);
-          const embeddings = await embedPassages(
-            // Only a WebLLM chat user needs the chat weights in this engine.
-            settings.provider === "webllm" ? settings.webllmModel : null,
-            texts,
-          );
+          const embeddings = await embedder.embedPassages(texts);
           if (cancelled) break;
 
           const { written } = await api.post<{ written: number }>("/api/rag/chunks", {
@@ -396,5 +406,5 @@ export function useIndexing(settings: LlmSettings) {
     await refetch();
   }, [refetch]);
 
-  return { enabled, webGpuAvailable, status, isIndexing, indexedThisRun, rebuild };
+  return { enabled, backend, status, isIndexing, indexedThisRun, rebuild };
 }

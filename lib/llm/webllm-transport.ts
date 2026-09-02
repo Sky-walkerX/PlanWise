@@ -10,7 +10,7 @@ import {
   type WebWorkerMLCEngine,
 } from "@mlc-ai/web-llm";
 import type { PromptMessage } from "@/lib/chat/types";
-import { EMBEDDING_MODEL } from "@/lib/rag/embedding-model";
+import { WEBLLM_EMBEDDING_MODEL } from "@/lib/rag/embedding-model";
 import { buildEmbedInput } from "./embed-input";
 import type { ChatTransport, StreamOpts } from "./transport";
 
@@ -43,7 +43,7 @@ async function probeWebGPU(): Promise<{ available: boolean; reason?: string }> {
   if (typeof navigator === "undefined" || !("gpu" in navigator)) {
     return {
       available: false,
-      reason: "This browser has no WebGPU support. Use a local server instead, or switch to a browser with WebGPU support (recent Chrome or Edge).",
+      reason: "This browser has no WebGPU, so chat can't run in it. Use a local server instead, or switch to recent Chrome or Edge. Your notes are still indexed, on the CPU.",
     };
   }
   try {
@@ -51,7 +51,7 @@ async function probeWebGPU(): Promise<{ available: boolean; reason?: string }> {
     if (!gpu || typeof gpu.requestAdapter !== "function") {
       return {
         available: false,
-        reason: "This browser does not expose the WebGPU API. Use a local server instead.",
+        reason: "This browser does not expose the WebGPU API, so chat can't run in it. Use a local server instead. Your notes are still indexed, on the CPU.",
       };
     }
     const adapter = (await gpu.requestAdapter()) as {
@@ -66,7 +66,7 @@ async function probeWebGPU(): Promise<{ available: boolean; reason?: string }> {
     if (!adapter) {
       return {
         available: false,
-        reason: "No compatible GPU or WebGPU adapter found on this machine. Use a local server instead.",
+        reason: "No compatible GPU or WebGPU adapter found on this machine, so chat can't run in the browser. Use a local server instead. Your notes are still indexed, on the CPU.",
       };
     }
 
@@ -78,13 +78,13 @@ async function probeWebGPU(): Promise<{ available: boolean; reason?: string }> {
       ) {
         return {
           available: false,
-          reason: `This browser's WebGPU limit (maxStorageBuffersPerShaderStage: ${limits.maxStorageBuffersPerShaderStage}) is below WebLLM's requirement of 10. Switch to Chrome or Edge, or use a local server.`,
+          reason: `Chat can't run in this browser: its WebGPU limit (maxStorageBuffersPerShaderStage: ${limits.maxStorageBuffersPerShaderStage}) is below WebLLM's requirement of 10, and WebLLM has no fallback below it. Use a local server, or Chrome or Edge. Your notes are still indexed, on the CPU.`,
         };
       }
       if (typeof limits.maxBufferSize === "number" && limits.maxBufferSize < 1 << 28) {
         return {
           available: false,
-          reason: "This browser's WebGPU buffer size limit is too low for in-browser models. Use a local server instead.",
+          reason: "This browser's WebGPU buffer size limit is too low to run chat in it. Use a local server instead. Your notes are still indexed, on the CPU.",
         };
       }
     }
@@ -116,7 +116,7 @@ let loadedKey: string | null = null;
  * VRAM for a model that would never be asked to generate a single token.
  */
 function engineModels(chatModel: string | null): string[] {
-  return chatModel ? [chatModel, EMBEDDING_MODEL] : [EMBEDDING_MODEL];
+  return chatModel ? [chatModel, WEBLLM_EMBEDDING_MODEL] : [WEBLLM_EMBEDDING_MODEL];
 }
 
 function engineKey(models: string[]): string {
@@ -252,7 +252,7 @@ export async function embedPassages(
 
   for (let i = 0; i < texts.length; i += EMBED_BATCH_SIZE) {
     const batch = texts.slice(i, i + EMBED_BATCH_SIZE).map((t) => buildEmbedInput(t, "passage"));
-    const response = await engine.embeddings.create({ input: batch, model: EMBEDDING_MODEL });
+    const response = await engine.embeddings.create({ input: batch, model: WEBLLM_EMBEDDING_MODEL });
     for (const item of response.data) out.push(normalize(item.embedding));
   }
 
@@ -269,7 +269,7 @@ export async function embedQuery(
   const engine = await getEngine(engineModels(chatModel), onProgress);
   const response = await engine.embeddings.create({
     input: [buildEmbedInput(query, "query")],
-    model: EMBEDDING_MODEL,
+    model: WEBLLM_EMBEDDING_MODEL,
   });
   return normalize(response.data[0].embedding);
 }

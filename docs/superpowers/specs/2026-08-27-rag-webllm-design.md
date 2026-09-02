@@ -95,6 +95,29 @@ poor value.
 
 The cost of this choice is real and handled in §9: without WebGPU there is no index.
 
+**Superseded 2026-09-02.** There is now a second embedding backend, and the "no WebGPU, no index"
+cost above no longer applies. Two things forced the reversal. WebLLM hard-requires
+`maxStorageBuffersPerShaderStage >= 10` and throws below it, and Firefox reports 9, so an entire
+browser was excluded rather than only Safari and old mobile. And a user on Firefox with a local
+server had working chat but no retrieval at all, meaning the moment their plan outgrew the budget
+it was silently trimmed, which is precisely what this design exists to prevent.
+
+The bundling objection above was about server-side use. `lib/llm/wasm-embedder.ts` imports
+`@huggingface/transformers` dynamically from a client component only, so it never enters the server
+bundle, and the initial client bundle is unchanged because the import is lazy.
+
+The "second model" objection does not apply either, because it is not a second model. The CPU path
+runs the *same* fp32 Snowflake weights through onnxruntime instead of TVM, so both backends write
+vectors into one space, tagged with one `EMBEDDING_MODEL`. Indexing in Chrome and then opening the
+account in Firefox reuses the existing index rather than re-embedding, which is verified end to
+end. This is why the stored identifier now names the weights (`snowflake-arctic-embed-s`) rather
+than the runtime (`snowflake-arctic-embed-s-q0f32-MLC-b4`); renaming it re-indexes every existing
+corpus once, lazily, through the §7.3 freshness path.
+
+A quantized ONNX build would cut the 127 MB download to 32 MB and was rejected: its vectors drift
+away from the WebGPU path's, and because both are 384 dimensions the mismatch would pass every
+dimension check and surface only as quietly worse retrieval.
+
 The `b4` variant is deliberate. `b32` embeds 32 passages per call but reserves 1,023 MB of VRAM,
 which would compete with the chat model. At `b4` the embedder and a 2,037 MB chat model sit in one
 engine at about 2.3 GB total. Batch-4 means roughly 20 calls for a corpus this size, which costs
@@ -607,7 +630,10 @@ offering 711 MB and 879 MB options.
 model given the right passage can still draw the wrong conclusion from it. The sources row exists
 so the user can tell those two failures apart.
 
-**No WebGPU means no index.** Accepted in §4.1. Roughly the cost of one dependency against Safari
+**No WebGPU means no index.** ~~Accepted in §4.1.~~ Resolved 2026-09-02 by the CPU embedding
+backend; see the amendment in §4.1. The original reasoning follows.
+
+Roughly the cost of one dependency against Safari
 and older-mobile coverage.
 
 **Retrieval can be confidently wrong.** A question whose answer spans six notes gets three of them

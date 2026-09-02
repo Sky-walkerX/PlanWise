@@ -1,7 +1,11 @@
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true
+  # Browser-only: the ONNX runtime we use is onnxruntime-web, loaded by
+  # lib/llm/wasm-embedder.ts. Skip building the native Node addon.
+  onnxruntime-node: false
   prisma: true
+  protobufjs: false
   sharp: true
   unrs-resolver: true
 onlyBuiltDependencies:

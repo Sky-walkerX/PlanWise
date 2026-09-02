@@ -89,7 +89,8 @@ export function SettingsSheet({
           </label>
           <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
             When your plan is too big to send whole, retrieve the passages that answer the question instead of
-            silently trimming. Needs WebGPU to embed your notes — chat itself still works without it.
+            silently trimming. Uses your GPU where WebGPU is available and your CPU everywhere else, so it works
+            in every browser.
           </p>
         </div>
 
@@ -355,8 +356,8 @@ function WebllmSettings({
 
   const clearCache = async () => {
     const { clearModelCache } = await import("@/lib/llm/webllm-transport");
-    const { EMBEDDING_MODEL } = await import("@/lib/rag/embedding-model");
-    await Promise.all([clearModelCache(draft.webllmModel || DEFAULT_WEBLLM_MODEL), clearModelCache(EMBEDDING_MODEL)]);
+    const { WEBLLM_EMBEDDING_MODEL } = await import("@/lib/rag/embedding-model");
+    await Promise.all([clearModelCache(draft.webllmModel || DEFAULT_WEBLLM_MODEL), clearModelCache(WEBLLM_EMBEDDING_MODEL)]);
     setResult({ ok: true, message: "Cached weights cleared." });
   };
 
