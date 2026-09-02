@@ -41,7 +41,7 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   const createConversation = useCreateConversation();
   const updateConversation = useUpdateConversation();
   const { data: conversation } = useConversation(conversationId ?? undefined);
-  const { send, stop, streamText, isStreaming, error, budget } = useSendMessage();
+  const { send, stop, streamText, isStreaming, phase, phaseDetail, error, budget } = useSendMessage();
   const indexing = useIndexing(settings);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -182,6 +182,8 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
               messages={messages}
               streamText={streamText}
               isStreaming={isStreaming}
+              phase={phase}
+              phaseDetail={phaseDetail}
               error={error}
               subjectId={homeSubjectId}
             />

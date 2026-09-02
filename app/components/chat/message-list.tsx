@@ -5,7 +5,16 @@ import type { ChatMessage } from "@/app/generated/prisma";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Markdown } from "@/app/components/subject/markdown";
 import { splitReasoning } from "@/lib/chat/reasoning";
+import type { StreamPhase } from "@/hooks/useChat";
 import { SaveToNote } from "./save-to-note";
+
+/** Short local timestamp: "2:34 PM" */
+function formatTime(date: Date | string): string {
+  return new Date(date).toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 /**
  * The transcript, plus the reply currently arriving.
@@ -18,12 +27,16 @@ export function MessageList({
   messages,
   streamText,
   isStreaming,
+  phase,
+  phaseDetail,
   error,
   subjectId,
 }: {
   messages: ChatMessage[];
   streamText: string;
   isStreaming: boolean;
+  phase: StreamPhase;
+  phaseDetail: string | null;
   error: string | null;
   subjectId: string | null;
 }) {
@@ -55,8 +68,11 @@ export function MessageList({
 
       {messages.map((message) =>
         message.role === "USER" ? (
-          <div key={message.id} className="lk-chat-bubble user whitespace-pre-wrap">
-            {message.content}
+          <div key={message.id} className="lk-chat-bubble user">
+            <p className="whitespace-pre-wrap">{message.content}</p>
+            <span className="lk-mono mt-1.5 block text-right text-[10px] uppercase tracking-wide text-muted-foreground">
+              {formatTime(message.createdAt)}
+            </span>
           </div>
         ) : (
           <AssistantBubble
@@ -69,7 +85,7 @@ export function MessageList({
         ),
       )}
 
-      {isStreaming && <StreamingBubble text={streamText} />}
+      {isStreaming && <StreamingBubble text={streamText} phase={phase} detail={phaseDetail} />}
 
       {error && (
         <div className="lk-card border-destructive p-3">
@@ -147,22 +163,86 @@ function Sources({ breadcrumbs }: { breadcrumbs: string[] }) {
   );
 }
 
-/** The reply as it arrives. Shows "thinking" until the answer itself starts. */
-function StreamingBubble({ text }: { text: string }) {
-  const { answer, reasoning, thinking } = splitReasoning(text);
+/** What each waiting step is called, in the user's terms rather than ours. */
+const PHASE_LABEL: Record<StreamPhase, string> = {
+  idle: "waiting",
+  embedding: "searching your notes",
+  preparing: "gathering context",
+  waiting: "thinking",
+  streaming: "thinking",
+};
+
+/**
+ * Seconds since the reply started, once it's been long enough to be worth
+ * saying. A local model can take twenty seconds before its first token, and
+ * an indicator that never changes is indistinguishable from a hang.
+ */
+function useElapsed(active: boolean): number {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!active) return;
+    const started = Date.now();
+    setSeconds(0);
+    const id = setInterval(() => setSeconds(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [active]);
+
+  return seconds;
+}
+
+/**
+ * The reply as it arrives.
+ *
+ * Until the first whole word exists it shows what it's actually waiting on.
+ * Once text is arriving it renders that text and nothing else: the caret used
+ * to sit alone in an empty bubble, which read as a stray lime rectangle rather
+ * than as progress.
+ */
+function StreamingBubble({ text, phase, detail }: { text: string; phase: StreamPhase; detail: string | null }) {
+  const { answer, reasoning } = splitReasoning(text);
+  const elapsed = useElapsed(true);
+
+  // `streamingPrefix` withholds text until a word completes, so an empty
+  // `answer` here means nothing is ready to paint, not that nothing arrived.
+  const waiting = !answer;
 
   return (
     <div className="lk-chat-bubble assistant">
       {reasoning && <Reasoning text={reasoning} defaultOpen={false} />}
-      {thinking && !answer && (
-        <span className="lk-mono text-[11px] uppercase tracking-wide text-muted-foreground">
-          thinking
-        </span>
+
+      {waiting ? (
+        <Thinking label={PHASE_LABEL[phase]} detail={detail} elapsed={elapsed} />
+      ) : (
+        // The caret is a pseudo-element on the last rendered block, not a
+        // sibling: as a sibling of a block-level <p> it wrapped onto its own
+        // line instead of trailing the sentence.
+        <div className="lk-chat-stream">
+          <Markdown>{answer}</Markdown>
+        </div>
       )}
-      {answer && <Markdown>{answer}</Markdown>}
-      <span className="lk-chat-caret" aria-hidden />
+
       <span className="sr-only">Generating a reply</span>
     </div>
+  );
+}
+
+/** Three staggered dots and a label. The dots carry the sense of ongoing work
+ *  that a single blinking block never did. */
+function Thinking({ label, detail, elapsed }: { label: string; detail: string | null; elapsed: number }) {
+  return (
+    <span className="lk-thinking" role="status" aria-live="polite">
+      <span className="lk-thinking-dots" aria-hidden>
+        <i />
+        <i />
+        <i />
+      </span>
+      <span className="lk-mono text-[11px] uppercase tracking-wide text-muted-foreground">
+        {label}
+        {detail && ` · ${detail}`}
+        {!detail && elapsed >= 3 && ` · ${elapsed}s`}
+      </span>
+    </span>
   );
 }
 

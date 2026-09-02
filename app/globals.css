@@ -498,19 +498,63 @@
     line-height: 1.5;
   }
 
-  /* The caret that trails a streaming reply. */
-  .lk-chat-caret {
-    display: inline-block;
-    width: 7px;
-    height: 1em;
-    margin-left: 2px;
-    vertical-align: text-bottom;
-    background: var(--accent);
-    animation: lk-chat-blink 1s steps(2, start) infinite;
-  }
   @keyframes lk-chat-blink { to { visibility: hidden; } }
 
-  @media (prefers-reduced-motion: reduce) {
-    .lk-chat-caret { animation: none; }
+  /* While streaming, the caret trails the last rendered block from inside it.
+     As a sibling element it sat after a block-level <p> and so wrapped onto a
+     line of its own, which read as a stray mark rather than a cursor. */
+  .lk-chat-stream .lk-prose > :last-child::after {
+    content: "";
+    display: inline-block;
+    width: 2px;
+    height: 1.05em;
+    margin-left: 3px;
+    vertical-align: text-bottom;
+    background: var(--accent);
+    border-radius: 1px;
+    animation: lk-chat-blink 1.1s steps(2, start) infinite;
   }
+  /* A code block or table ends on its own terms; a caret wedged inside the
+     scroll box would sit in the wrong place entirely. */
+  .lk-chat-stream .lk-prose > pre:last-child::after,
+  .lk-chat-stream .lk-prose > table:last-child::after {
+    content: none;
+  }
+
+  /* ── Thinking indicator ───────────────────────────────────────────────
+     Shown while a reply is being waited on. Three dots travelling in
+     sequence: an animation with a direction reads as work in progress,
+     where a single blinking square reads as something broken. */
+  .lk-thinking {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .lk-thinking-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .lk-thinking-dots i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--muted-foreground);
+    animation: lk-thinking-pulse 1.25s ease-in-out infinite;
+  }
+  /* The stagger is what makes it read as a wave rather than a flash. */
+  .lk-thinking-dots i:nth-child(2) { animation-delay: 0.16s; }
+  .lk-thinking-dots i:nth-child(3) { animation-delay: 0.32s; }
+
+  @keyframes lk-thinking-pulse {
+    0%, 100% { opacity: 0.25; transform: translateY(0); }
+    40%      { opacity: 1;    transform: translateY(-2px); background: var(--accent); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lk-chat-stream .lk-prose > :last-child::after { animation: none; }
+    /* Still distinguishable from a finished reply, just not in motion. */
+    .lk-thinking-dots i { animation: none; opacity: 0.55; }
+  }
+
 }

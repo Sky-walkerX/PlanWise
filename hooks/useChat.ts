@@ -6,6 +6,8 @@ import type { ChatMessage, Conversation } from "@/app/generated/prisma";
 import { api } from "@/lib/fetcher";
 import type { PromptMessage } from "@/lib/chat/types";
 import type { RetrievalBudget } from "@/lib/chat/retrieve";
+import { streamingPrefix } from "@/lib/chat/stream-buffer";
+import { acquireEngine } from "@/lib/llm/engine-lock";
 import { createOpenAiTransport, LlmError } from "@/lib/llm/client";
 import { effectiveContextTokens, loadSettings, type LlmSettings } from "@/lib/llm/settings";
 import { EMBEDDING_DIMS, EMBEDDING_MODEL } from "@/lib/rag/embedding-model";
@@ -64,20 +66,65 @@ export function useDeleteConversation() {
 }
 
 /**
+ * What the panel is waiting on. A local model can take twenty seconds to
+ * produce its first token, and the first embed of a session can be a 130 MB
+ * download, so "busy" on its own reads as a hang. Naming the step is the
+ * difference between a user waiting and a user reloading the page.
+ */
+export type StreamPhase = "idle" | "embedding" | "preparing" | "waiting" | "streaming";
+
+/**
  * Drives one turn: ask the server for a prompt, stream it through the user's
  * own model, then hand the reply back to the server to store.
  *
  * The streaming text is local state rather than cache — it changes many times a
  * second, and only this panel needs it. It's cleared once the persisted message
  * lands in the transcript, so there is never a frame showing both.
+ *
+ * Tokens accumulate in a ref and paint at most once per animation frame,
+ * through `streamingPrefix`. A fast local model emits tokens far quicker than
+ * the screen refreshes, and rendering markdown per token both wastes the work
+ * and shows the half-formed words and unmatched `**` that the prefix trims.
  */
 export function useSendMessage() {
   const qc = useQueryClient();
   const [streamText, setStreamText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [phase, setPhase] = useState<StreamPhase>("idle");
+  const [phaseDetail, setPhaseDetail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [budget, setBudget] = useState<RetrievalBudget | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // The full stream so far, and the pending paint. Kept out of state so a
+  // token costs an assignment rather than a render.
+  const rawRef = useRef("");
+  const frameRef = useRef<number | null>(null);
+
+  const cancelPaint = useCallback(() => {
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
+    }
+  }, []);
+
+  const schedulePaint = useCallback(() => {
+    if (frameRef.current !== null) return;
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null;
+      setStreamText(streamingPrefix(rawRef.current));
+    });
+  }, []);
+
+  // Leaving the panel mid-reply shouldn't leave a frame queued or a request
+  // running against a component that no longer exists.
+  useEffect(
+    () => () => {
+      cancelPaint();
+      abortRef.current?.abort();
+    },
+    [cancelPaint],
+  );
 
   const stop = useCallback(() => abortRef.current?.abort(), []);
 
@@ -89,7 +136,9 @@ export function useSendMessage() {
 
       setError(null);
       setStreamText("");
+      rawRef.current = "";
       setIsStreaming(true);
+      setPhaseDetail(null);
 
       // Embedding the query is independent of which chat transport is
       // selected — retrieval helps the Ollama path too (§14 build sequence,
@@ -98,18 +147,31 @@ export function useSendMessage() {
       // no retrieval this turn, not a broken send.
       let queryEmbedding: number[] | undefined;
       if (settings.ragEnabled) {
+        setPhase("embedding");
         try {
           const { embedQuery, checkWebGPU } = await import("@/lib/llm/webllm-transport");
           const { available } = await checkWebGPU();
-          if (available) queryEmbedding = await embedQuery(settings.webllmModel, content);
+          if (available) {
+            queryEmbedding = await embedQuery(
+              // Null keeps the engine down to the embedder alone when chat
+              // runs against a local server; loading a chat model that will
+              // never generate a token would cost about 1.1 GB.
+              settings.provider === "webllm" ? settings.webllmModel : null,
+              content,
+              (report) => setPhaseDetail(describeProgress(report.progress)),
+            );
+          }
         } catch {
           // Degrades to digest mode server-side; nothing to surface here.
         }
+        setPhaseDetail(null);
       }
 
       let streamed = "";
       let sources: string[] = [];
+      let release: (() => void) | null = null;
       try {
+        setPhase("preparing");
         const prepared = await api.post<PrepareResponse>(
           `/api/chat/conversations/${conversationId}/prepare`,
           {
@@ -130,9 +192,16 @@ export function useSendMessage() {
             ? (await import("@/lib/llm/webllm-transport")).createWebllmTransport(settings.webllmModel)
             : createOpenAiTransport(settings);
 
+        // Chat owns the engine for the duration, so note autocomplete steps
+        // aside instead of queueing a completion behind a long reply.
+        release = acquireEngine("chat");
+        setPhase("waiting");
+
         for await (const token of transport.streamChat(prepared.messages, { signal: controller.signal })) {
+          if (!streamed) setPhase("streaming");
           streamed += token;
-          setStreamText((prev) => prev + token);
+          rawRef.current = streamed;
+          schedulePaint();
         }
       } catch (err) {
         const aborted = err instanceof DOMException && err.name === "AbortError";
@@ -146,13 +215,22 @@ export function useSendMessage() {
                 ? err
                 : "Something went wrong.",
           );
+          cancelPaint();
           setIsStreaming(false);
+          setPhase("idle");
           setStreamText("");
+          rawRef.current = "";
           return;
         }
         // A deliberate stop is different from a broken stream: the user read
         // what arrived, so it's kept rather than thrown away.
+      } finally {
+        release?.();
       }
+
+      // The queued paint would land after the transcript already shows this
+      // reply, briefly rendering it twice.
+      cancelPaint();
 
       if (streamed.trim()) {
         await api.post<ChatMessage>(`/api/chat/conversations/${conversationId}/messages`, {
@@ -163,14 +241,32 @@ export function useSendMessage() {
       }
 
       setIsStreaming(false);
+      setPhase("idle");
       setStreamText("");
+      rawRef.current = "";
       await qc.invalidateQueries({ queryKey: ["conversation", conversationId] });
       qc.invalidateQueries({ queryKey: ["conversations"] });
     },
-    [qc],
+    [qc, cancelPaint, schedulePaint],
   );
 
-  return { send, stop, streamText, isStreaming, error, budget, clearError: () => setError(null) };
+  return {
+    send,
+    stop,
+    streamText,
+    isStreaming,
+    phase,
+    phaseDetail,
+    error,
+    budget,
+    clearError: () => setError(null),
+  };
+}
+
+/** web-llm reports load progress as a 0–1 fraction. */
+function describeProgress(progress: number): string | null {
+  if (!Number.isFinite(progress) || progress <= 0 || progress >= 1) return null;
+  return `${Math.round(progress * 100)}%`;
 }
 
 export type RagStatus = { total: number; indexed: number; stale: number; orphaned: number; model: string; dims: number };
@@ -222,22 +318,51 @@ export function useIndexing(settings: LlmSettings) {
   const enabled = settings.ragEnabled && webGpuAvailable === true;
   const { data: status, refetch } = useRagStatus(enabled);
 
+  // Chunks whose source record is gone. Deleting them is a write, so it no
+  // longer rides along on the status GET.
+  useEffect(() => {
+    if (!enabled || !status || status.orphaned === 0) return;
+    let cancelled = false;
+    api
+      .post<{ deleted: number }>("/api/rag/sweep", {})
+      .then(() => {
+        if (!cancelled) void refetch();
+      })
+      .catch(() => {
+        // A failed sweep leaves the orphans counted; the next pass retries.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, status, refetch]);
+
   useEffect(() => {
     if (!enabled || !status || status.stale === 0 || runningRef.current) return;
     runningRef.current = true;
     setIsIndexing(true);
     setIndexedThisRun(0);
 
+    // Closing the panel mid-index shouldn't leave the GPU embedding passages
+    // for a component that no longer exists.
+    let cancelled = false;
+
     (async () => {
       const { embedPassages } = await import("@/lib/llm/webllm-transport");
       try {
         for (;;) {
+          if (cancelled) break;
+
           const pending = await api.get<PendingChunk[]>("/api/rag/pending?limit=20");
-          if (pending.length === 0) break;
+          if (pending.length === 0 || cancelled) break;
 
           // §7.2: the embedder sees the breadcrumb, two newlines, then the content.
           const texts = pending.map((c) => `${c.breadcrumb}\n\n${c.content}`);
-          const embeddings = await embedPassages(settings.webllmModel, texts);
+          const embeddings = await embedPassages(
+            // Only a WebLLM chat user needs the chat weights in this engine.
+            settings.provider === "webllm" ? settings.webllmModel : null,
+            texts,
+          );
+          if (cancelled) break;
 
           const { written } = await api.post<{ written: number }>("/api/rag/chunks", {
             model: EMBEDDING_MODEL,
@@ -245,15 +370,26 @@ export function useIndexing(settings: LlmSettings) {
             chunks: pending.map((c, i) => ({ ...c, embedding: embeddings[i] })),
           });
           setIndexedThisRun((n) => n + written);
+
+          // The server rejects a group whose source changed underneath the
+          // embedding pass. If it rejected every one, asking for the same
+          // batch again would embed it again, and again.
+          if (written === 0) break;
         }
       } finally {
         runningRef.current = false;
-        setIsIndexing(false);
-        refetch();
-        qc.invalidateQueries({ queryKey: ["rag-status"] });
+        if (!cancelled) {
+          setIsIndexing(false);
+          void refetch();
+          qc.invalidateQueries({ queryKey: ["rag-status"] });
+        }
       }
     })();
-  }, [enabled, status, settings.webllmModel, refetch, qc]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, status, settings.provider, settings.webllmModel, refetch, qc]);
 
   const rebuild = useCallback(async () => {
     await api.del("/api/rag/chunks");
