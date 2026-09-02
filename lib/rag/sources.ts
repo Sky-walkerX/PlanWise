@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { hashContent, type ChunkSourceType } from "./chunk";
+import { chunkSource, hashContent, type Chunk, type ChunkSourceType } from "./chunk";
 import { EMBEDDING_DIMS, EMBEDDING_MODEL } from "./embedding-model";
 
 export { EMBEDDING_DIMS, EMBEDDING_MODEL };
@@ -21,15 +21,27 @@ export type LiveSource = {
   resourceTitle?: string | null;
   text: string;
   contentHash: string;
+  /** Chunked here rather than in `/api/rag/pending`, because whether a source
+   *  chunks to anything at all decides if it belongs in this list. */
+  chunks: Chunk[];
 };
 
 export function sourceKey(source: ChunkSourceType, sourceId: string): string {
   return `${source}:${sourceId}`;
 }
 
-/** Every live source record with non-empty note text, for this user. Titles
- *  aren't chunked (§7.1) so a record with an empty note body contributes no
- *  chunks and is excluded here — there is nothing for it to be stale about. */
+/**
+ * Every live source record that actually yields chunks, for this user.
+ *
+ * Titles aren't chunked (§7.1), so a record with an empty note body has
+ * nothing to be stale about. Neither does one whose text is too short to
+ * survive the chunker's minimum — "Read chapter 3" is a perfectly ordinary
+ * task description that produces zero passages. Counting those as sources
+ * left them permanently stale: never indexable, never indexed, and reported
+ * forever as outstanding work by `/api/rag/status`. The chunker is the only
+ * thing that can answer whether a source yields anything, so it runs here and
+ * the result rides along on `chunks` for `/api/rag/pending` to reuse.
+ */
 export async function listLiveSources(userId: string): Promise<LiveSource[]> {
   const subjects = await prisma.subject.findMany({
     where: { userId },
@@ -69,9 +81,11 @@ export async function listLiveSources(userId: string): Promise<LiveSource[]> {
 
   const out: LiveSource[] = [];
 
-  const push = (entry: Omit<LiveSource, "contentHash"> & { text: string }) => {
+  const push = (entry: Omit<LiveSource, "contentHash" | "chunks">) => {
     if (!entry.text.trim()) return;
-    out.push({ ...entry, contentHash: hashContent(entry.text) });
+    const chunks = chunkSource(entry);
+    if (chunks.length === 0) return;
+    out.push({ ...entry, contentHash: hashContent(entry.text), chunks });
   };
 
   for (const subject of subjects) {
@@ -130,7 +144,7 @@ type TaskWithSubtasks = {
 };
 
 function pushTask(
-  push: (entry: Omit<LiveSource, "contentHash"> & { text: string }) => void,
+  push: (entry: Omit<LiveSource, "contentHash" | "chunks">) => void,
   subjectId: string,
   subjectTitle: string,
   milestoneTitle: string | null,

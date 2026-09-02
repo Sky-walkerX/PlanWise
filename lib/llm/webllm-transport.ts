@@ -30,7 +30,16 @@ export function hasWebGPU(): boolean {
   return typeof navigator !== "undefined" && "gpu" in navigator && !!navigator.gpu;
 }
 
-export async function checkWebGPU(): Promise<{ available: boolean; reason?: string }> {
+/** The adapter's capabilities don't change over a page's lifetime, and
+ *  `requestAdapter()` is not free, so the first probe is the only one. */
+let webGpuProbe: Promise<{ available: boolean; reason?: string }> | null = null;
+
+export function checkWebGPU(): Promise<{ available: boolean; reason?: string }> {
+  webGpuProbe ??= probeWebGPU();
+  return webGpuProbe;
+}
+
+async function probeWebGPU(): Promise<{ available: boolean; reason?: string }> {
   if (typeof navigator === "undefined" || !("gpu" in navigator)) {
     return {
       available: false,
@@ -96,7 +105,23 @@ export function listWebllmChatModels(): string[] {
 }
 
 let enginePromise: Promise<WebWorkerMLCEngine> | null = null;
-let loadedChatModel: string | null = null;
+let loadedKey: string | null = null;
+
+/**
+ * Which models an engine has to hold to serve a given job.
+ *
+ * `chatModel` is null when chat runs somewhere else — an Ollama or LM Studio
+ * endpoint — and only the embedder is wanted. That case matters: loading the
+ * default 1.7B chat model alongside it costs about 1.1 GB of download and
+ * VRAM for a model that would never be asked to generate a single token.
+ */
+function engineModels(chatModel: string | null): string[] {
+  return chatModel ? [chatModel, EMBEDDING_MODEL] : [EMBEDDING_MODEL];
+}
+
+function engineKey(models: string[]): string {
+  return [...models].sort().join("|");
+}
 
 function normalizeError(err: unknown): Error {
   const str = err instanceof Error ? err.message : typeof err === "string" ? err : String(err || "");
@@ -111,14 +136,19 @@ function normalizeError(err: unknown): Error {
 }
 
 /**
- * The shared engine. Reloading with a different chat model tears down and
- * reloads both models that live in it, since web-llm loads a fixed model
- * list per engine and the embedder always needs to be one of them.
+ * The shared engine, keyed on the exact set of models it was built with.
+ *
+ * web-llm fixes a model list per engine, so asking for a different set tears
+ * the old one down and reloads. Keying on the set rather than on the chat
+ * model alone is what lets an embedder-only engine exist: a user chatting
+ * through Ollama gets a 130 MB engine, and only a user chatting through
+ * WebLLM pays for the chat weights too.
  */
-function getEngine(chatModel: string, onProgress?: (report: Progress) => void): Promise<WebWorkerMLCEngine> {
-  if (enginePromise && loadedChatModel === chatModel) return enginePromise;
+function getEngine(models: string[], onProgress?: (report: Progress) => void): Promise<WebWorkerMLCEngine> {
+  const key = engineKey(models);
+  if (enginePromise && loadedKey === key) return enginePromise;
 
-  loadedChatModel = chatModel;
+  loadedKey = key;
   enginePromise = new Promise<WebWorkerMLCEngine>((resolve, reject) => {
     try {
       const worker = new Worker(new URL("./webllm.worker.ts", import.meta.url), { type: "module" });
@@ -126,7 +156,7 @@ function getEngine(chatModel: string, onProgress?: (report: Progress) => void): 
         const message = event.message || "Failed to initialize WebWorker for WebLLM.";
         reject(new Error(message));
       };
-      CreateWebWorkerMLCEngine(worker, [chatModel, EMBEDDING_MODEL], {
+      CreateWebWorkerMLCEngine(worker, models, {
         initProgressCallback: onProgress,
       })
         .then(resolve)
@@ -138,7 +168,7 @@ function getEngine(chatModel: string, onProgress?: (report: Progress) => void): 
   enginePromise.catch(() => {
     // A failed load shouldn't wedge the singleton — the next call retries.
     enginePromise = null;
-    loadedChatModel = null;
+    loadedKey = null;
   });
 
   return enginePromise;
@@ -147,14 +177,14 @@ function getEngine(chatModel: string, onProgress?: (report: Progress) => void): 
 /** Warms the engine ahead of first use, e.g. from the settings sheet, so
  *  download progress has somewhere to report to before the user asks anything. */
 export function preloadEngine(chatModel: string, onProgress?: (report: Progress) => void): Promise<void> {
-  return getEngine(chatModel, onProgress).then(() => undefined);
+  return getEngine(engineModels(chatModel), onProgress).then(() => undefined);
 }
 
 export async function unloadEngine(): Promise<void> {
   if (!enginePromise) return;
   const engine = await enginePromise.catch(() => null);
   enginePromise = null;
-  loadedChatModel = null;
+  loadedKey = null;
   await engine?.unload();
 }
 
@@ -171,7 +201,9 @@ function toWebllmMessages(messages: PromptMessage[]) {
 }
 
 async function* streamTokens(chatModel: string, messages: PromptMessage[], opts: StreamOpts): AsyncGenerator<string> {
-  const engine = await getEngine(chatModel);
+  // Chatting through WebLLM means the embedder is wanted sooner or later, and
+  // adding it later would force a full teardown and reload of both.
+  const engine = await getEngine(engineModels(chatModel));
   const stream = await engine.chat.completions.create({
     model: chatModel,
     messages: toWebllmMessages(messages),
@@ -206,9 +238,16 @@ function normalize(vector: number[]): number[] {
  * Embeds passages in batches of 4, matching the `b4` model's batch size.
  * Vectors are normalised before they leave the browser (§4.2), so scoring on
  * the server is a plain dot product.
+ *
+ * `chatModel` is null whenever chat runs against a local server rather than
+ * WebLLM, which keeps the engine down to the embedder alone.
  */
-export async function embedPassages(chatModel: string, texts: string[]): Promise<number[][]> {
-  const engine = await getEngine(chatModel);
+export async function embedPassages(
+  chatModel: string | null,
+  texts: string[],
+  onProgress?: (report: Progress) => void,
+): Promise<number[][]> {
+  const engine = await getEngine(engineModels(chatModel), onProgress);
   const out: number[][] = [];
 
   for (let i = 0; i < texts.length; i += EMBED_BATCH_SIZE) {
@@ -222,8 +261,12 @@ export async function embedPassages(chatModel: string, texts: string[]): Promise
 
 /** Arctic-embed is asymmetric (§7.2): the query gets a search-instruction
  *  prefix a passage never does. See `embed-input.ts` for the prefix itself. */
-export async function embedQuery(chatModel: string, query: string): Promise<number[]> {
-  const engine = await getEngine(chatModel);
+export async function embedQuery(
+  chatModel: string | null,
+  query: string,
+  onProgress?: (report: Progress) => void,
+): Promise<number[]> {
+  const engine = await getEngine(engineModels(chatModel), onProgress);
   const response = await engine.embeddings.create({
     input: [buildEmbedInput(query, "query")],
     model: EMBEDDING_MODEL,

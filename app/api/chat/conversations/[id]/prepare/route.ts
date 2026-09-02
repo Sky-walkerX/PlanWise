@@ -71,10 +71,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const isFirstTurn = history.length === 0;
   const shouldTitle = isFirstTurn && conversation.title === "New chat";
 
+  // Retrieval can't run without a query vector, and `assembleRetrievalPrompt`
+  // discards the chunks entirely in digest mode. Reading every embedding to
+  // throw it away costs nothing at the 60–80 chunks §4.2 measured and
+  // megabytes per turn once a corpus grows, so the read is conditional.
+  const canRetrieve = ragEnabled && !!queryEmbedding?.length;
+
   // The subject and chunk reads don't depend on the write, so they overlap.
   const [subjects, chunks] = await Promise.all([
     loadContextSubjects(userId, conversation.contextSubjectIds, conversation.subjectId),
-    listScorableChunks(userId, conversation.contextSubjectIds),
+    canRetrieve ? listScorableChunks(userId, conversation.contextSubjectIds) : Promise.resolve([]),
     prisma.$transaction([
       isRetry
         ? prisma.chatMessage.update({ where: { id: last.id }, data: { content } })
