@@ -278,6 +278,7 @@ export const TaskRow = memo(function TaskRow({ task }: { task: TaskWithSubtasks 
           {editingNotes ? (
             <NotesEditor
               value={failedNotes ?? task.description ?? ""}
+              breadcrumb={task.title}
               onSave={saveNotes}
               onCancel={() => {
                 setEditingNotes(false);

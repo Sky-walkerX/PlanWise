@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -9,6 +10,8 @@ import { EditorView, keymap } from "@codemirror/view";
 import { Prec } from "@codemirror/state";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
+import { useNoteCompletion } from "@/hooks/useNoteCompletion";
+import { ghostCompletion } from "./ghost-completion";
 import { Markdown } from "./markdown";
 
 // Markdown notes editor: CodeMirror 6 with markdown syntax highlighting
@@ -189,6 +192,12 @@ const smartPaste = EditorView.domEventHandlers({
   },
 });
 
+/** `/subjects/<uuid>` → the subject whose vocabulary should be suggested. */
+function subjectIdFromPath(pathname: string | null): string | null {
+  const match = pathname?.match(/^\/subjects\/([^/]+)/);
+  return match ? match[1] : null;
+}
+
 export function NotesEditor({
   value,
   onSave,
@@ -196,6 +205,7 @@ export function NotesEditor({
   saving = false,
   placeholder = "Notes — markdown supported…",
   autoFocus = true,
+  breadcrumb = "",
 }: {
   value: string;
   onSave: (draft: string) => void;
@@ -203,11 +213,21 @@ export function NotesEditor({
   saving?: boolean;
   placeholder?: string;
   autoFocus?: boolean;
+  /** What these notes are attached to, e.g. a milestone or task title. Only
+   *  the model tier uses it, to keep a continuation on topic. */
+  breadcrumb?: string;
 }) {
   const [draft, setDraft] = useState(value);
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const { resolvedTheme } = useTheme();
   const dark = resolvedTheme === "dark";
+
+  const pathname = usePathname();
+  const { vocabulary, requestModel, modelPending, setModelPending } = useNoteCompletion(
+    subjectIdFromPath(pathname),
+    breadcrumb,
+  );
+  const onModelPending = useCallback((pending: boolean) => setModelPending(pending), [setModelPending]);
 
   // Refs so the (memoized) keymap always sees current values.
   const draftRef = useRef(draft);
@@ -224,6 +244,9 @@ export function NotesEditor({
       markdown({ base: markdownLanguage, codeLanguages: languages }),
       EditorView.lineWrapping,
       smartPaste,
+      // Reads the vocabulary through a getter, so a refetch lands without
+      // rebuilding the extensions — which would reset the undo history.
+      ghostCompletion({ vocabulary, requestModel, onModelPending }),
       Prec.high(
         keymap.of([
           {
@@ -244,7 +267,7 @@ export function NotesEditor({
       ),
       ...lockinTheme(dark),
     ],
-    [dark],
+    [dark, vocabulary, requestModel, onModelPending],
   );
 
   const tabBtn = (t: "edit" | "preview", label: string) => (
@@ -265,7 +288,11 @@ export function NotesEditor({
         {tabBtn("edit", "Edit")}
         {tabBtn("preview", "Preview")}
         <span className="lk-mono ml-auto hidden text-[9px] text-muted-foreground sm:inline">
-          ⌘↩ save · esc cancel
+          {modelPending ? (
+            <span className="lk-ghost-pending">⌃␣ thinking…</span>
+          ) : (
+            <>⇥ complete · ⌃␣ ask model · ⌘↩ save</>
+          )}
         </span>
       </div>
 

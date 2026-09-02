@@ -184,6 +184,7 @@ export const SubtaskRow = memo(function SubtaskRow({
           {editingNotes ? (
             <NotesEditor
               value={failedNotes ?? subtask.notes}
+              breadcrumb={subtask.title}
               onSave={saveNotes}
               onCancel={() => {
                 setEditingNotes(false);

@@ -182,6 +182,7 @@ export const MilestoneItem = memo(function MilestoneItem({
             <div className="mb-3">
               <NotesEditor
                 value={failedNotes ?? milestone.notes}
+                breadcrumb={milestone.title}
                 placeholder="Notes — markdown supported (headings, lists, code, tables, links)…"
                 onSave={saveNotes}
                 onCancel={() => {

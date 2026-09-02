@@ -557,4 +557,43 @@
     .lk-thinking-dots i { animation: none; opacity: 0.55; }
   }
 
+  /* ── Note autocomplete ────────────────────────────────────────────────
+     Inline ghost text in the CodeMirror notes editor. It has to read as
+     clearly not-yet-typed, or the user can't tell their note from the
+     suggestion, and it must not shift the text around it. */
+  .lk-ghost {
+    color: var(--muted-foreground);
+    opacity: 0.62;
+    font-style: italic;
+    /* The suggestion is a decoration widget sitting in the text flow, so
+       anything that changed metrics here would nudge the real characters. */
+    pointer-events: none;
+    user-select: none;
+    /* `pre-wrap`, not `pre`: leading spaces in a suggestion are significant,
+       but a long model completion still has to wrap. Under `pre` the whole
+       widget is one unbreakable box, so it dropped to its own line and ran
+       off the right edge. */
+    white-space: pre-wrap;
+  }
+  /* A model's guess is worth distinguishing from the user's own vocabulary:
+     one is a phrase they've written before, the other is an invention. */
+  .lk-ghost-model {
+    color: var(--accent);
+    opacity: 0.72;
+    font-style: normal;
+    border-bottom: 1px dotted color-mix(in oklab, var(--accent) 55%, transparent);
+  }
+
+  .lk-ghost-pending {
+    color: var(--accent);
+    animation: lk-ghost-fade 1.1s ease-in-out infinite;
+  }
+  @keyframes lk-ghost-fade {
+    0%, 100% { opacity: 0.45; }
+    50%      { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lk-ghost-pending { animation: none; }
+  }
 }
