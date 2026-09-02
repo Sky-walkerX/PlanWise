@@ -26,7 +26,15 @@ function subjectIdFromPath(pathname: string | null): string | null {
   return match ? match[1] : null;
 }
 
-export function ChatPanel({ onClose }: { onClose: () => void }) {
+export function ChatPanel({
+  isOpen,
+  onClose,
+  onStreamingChange,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onStreamingChange: (streaming: boolean) => void;
+}) {
   const pathname = usePathname();
   const homeSubjectId = subjectIdFromPath(pathname);
 
@@ -49,9 +57,15 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
     setSettings(loadSettings());
   }, []);
 
+  // The panel stays mounted behind the rail, so focus follows the expand as
+  // well as the view switch — a hidden textarea can't take it on its own.
   useEffect(() => {
-    if (view === "chat") textareaRef.current?.focus();
-  }, [view]);
+    if (isOpen && view === "chat") textareaRef.current?.focus();
+  }, [isOpen, view]);
+
+  useEffect(() => {
+    onStreamingChange(isStreaming);
+  }, [isStreaming, onStreamingChange]);
 
   const ready = isConfigured(settings);
   const messages = conversation?.messages ?? [];
@@ -114,130 +128,130 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   }, [budget]);
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-40 bg-black/30 sm:hidden"
-        onClick={onClose}
-        aria-hidden
-      />
-      <aside
-        role="dialog"
-        aria-label="Chat"
-        className="lk-chat-panel fixed inset-y-0 right-0 z-50 flex w-full flex-col sm:w-[420px] lg:w-[480px]"
-      >
-        <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="lk-display text-sm font-black tracking-tight">Ask</span>
-            <span className="lk-mono truncate text-[10.5px] uppercase tracking-wide text-muted-foreground">
-              {ready ? (settings.provider === "webllm" ? settings.webllmModel : settings.model) : "not connected"}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setView(view === "history" ? "chat" : "history")}
-              aria-label="Conversation history"
-              className="lk-iconbtn"
-            >
-              <History size={15} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setView(view === "settings" ? "chat" : "settings")}
-              aria-label="Connection settings"
-              className="lk-iconbtn"
-            >
-              <Settings size={15} />
-            </button>
-            <button type="button" onClick={onClose} aria-label="Close chat" className="lk-iconbtn">
-              <X size={15} />
-            </button>
-          </div>
-        </header>
+    // Docked at `sm` and up, where the rail reserves it a place in the shell;
+    // below that there is nothing to dock into, so it goes back to an overlay.
+    <aside
+      aria-label="Chat"
+      className="lk-chat-panel flex w-full flex-col max-sm:fixed max-sm:inset-0 max-sm:z-50 sm:w-[372px]"
+    >
+      <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="lk-display text-sm font-black tracking-tight">Ask</span>
+          <span className="lk-mono truncate text-[10.5px] uppercase tracking-wide text-muted-foreground">
+            {ready ? (settings.provider === "webllm" ? settings.webllmModel : settings.model) : "not connected"}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setView(view === "history" ? "chat" : "history")}
+            aria-label="Conversation history"
+            className="lk-iconbtn"
+          >
+            <History size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setView(view === "settings" ? "chat" : "settings")}
+            aria-label="Connection settings"
+            className="lk-iconbtn"
+          >
+            <Settings size={15} />
+          </button>
+          {/* The rail owns collapsing wherever it is on screen. */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close chat"
+            className="lk-iconbtn sm:hidden"
+          >
+            <X size={15} />
+          </button>
+        </div>
+      </header>
 
-        {view === "settings" && (
-          <div className="flex-1 overflow-hidden">
-            <SettingsSheet settings={settings} onChange={setSettings} onClose={() => setView("chat")} />
-          </div>
-        )}
+      {view === "settings" && (
+        <div className="flex-1 overflow-hidden">
+          <SettingsSheet settings={settings} onChange={setSettings} onClose={() => setView("chat")} />
+        </div>
+      )}
 
-        {view === "history" && (
-          <div className="flex-1 overflow-hidden">
-            <HistoryList
-              activeId={conversationId}
-              onNew={startNew}
-              onPick={(picked) => {
-                setConversationId(picked.id);
-                setSelected(picked.contextSubjectIds);
-                setView("chat");
-              }}
-            />
-          </div>
-        )}
+      {view === "history" && (
+        <div className="flex-1 overflow-hidden">
+          <HistoryList
+            activeId={conversationId}
+            onNew={startNew}
+            onPick={(picked) => {
+              setConversationId(picked.id);
+              setSelected(picked.contextSubjectIds);
+              setView("chat");
+            }}
+          />
+        </div>
+      )}
 
-        {view === "chat" && (
-          <>
-            <IndexStatus indexing={indexing} />
-            <MessageList
-              messages={messages}
-              streamText={streamText}
-              isStreaming={isStreaming}
-              phase={phase}
-              phaseDetail={phaseDetail}
-              error={error}
-              subjectId={homeSubjectId}
-            />
+      {view === "chat" && (
+        <>
+          <IndexStatus indexing={indexing} />
+          <MessageList
+            messages={messages}
+            streamText={streamText}
+            isStreaming={isStreaming}
+            phase={phase}
+            phaseDetail={phaseDetail}
+            error={error}
+            subjectId={homeSubjectId}
+          />
 
-            <div className="border-t border-border px-4 py-3">
-              <ContextPicker selected={selected} onChange={changeContext} />
+          <div className="border-t border-border px-4 py-3">
+            <ContextPicker selected={selected} onChange={changeContext} />
 
-              <div className="lk-chat-composer mt-2.5 flex items-end gap-2 px-2.5 py-2">
-                <textarea
-                  ref={textareaRef}
-                  rows={2}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    // Enter sends; Shift+Enter is a newline — the composer is a
-                    // chat box first and a text editor second.
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      void submit();
-                    }
-                  }}
-                  placeholder={ready ? "Ask something…" : "Connect a model to start"}
-                  className="lk-mono"
-                />
-                {isStreaming ? (
-                  <button type="button" onClick={stop} aria-label="Stop generating" className="lk-iconbtn shrink-0">
-                    <Square size={14} />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => void submit()}
-                    disabled={!draft.trim()}
-                    aria-label="Send"
-                    className="lk-iconbtn shrink-0"
-                  >
-                    <Send size={14} />
-                  </button>
-                )}
-              </div>
-
-              {budgetLine && (
-                <p className="lk-mono mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">
-                  ctx {budgetLine.used}/{budgetLine.ceiling} · {budgetLine.scope}
-                  {budgetLine.degraded && <span className="text-destructive"> · notes not searched this turn</span>}
-                  {budgetLine.truncated.length > 0 && (
-                    <span className="text-destructive"> · left out {budgetLine.truncated.join(", ")}</span>
-                  )}
-                </p>
+            <div className="lk-chat-composer mt-2.5 flex items-end gap-2 px-2.5 py-2">
+              <textarea
+                ref={textareaRef}
+                rows={2}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter sends; Shift+Enter is a newline — the composer is a
+                  // chat box first and a text editor second.
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void submit();
+                  }
+                }}
+                placeholder={ready ? "Ask something…" : "Connect a model to start"}
+                className="lk-mono"
+              />
+              {isStreaming ? (
+                <button type="button" onClick={stop} aria-label="Stop generating" className="lk-iconbtn shrink-0">
+                  <Square size={14} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void submit()}
+                  disabled={!draft.trim()}
+                  aria-label="Send"
+                  className="lk-iconbtn shrink-0"
+                >
+                  <Send size={14} />
+                </button>
               )}
             </div>
-          </>
-        )}
-      </aside>
-    </>
+
+            {budgetLine && (
+              <p className="lk-mono mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+                ctx {budgetLine.used}/{budgetLine.ceiling} · {budgetLine.scope}
+                {budgetLine.degraded && <span className="text-destructive"> · notes not searched this turn</span>}
+                {budgetLine.truncated.length > 0 && (
+                  <span className="text-destructive"> · left out {budgetLine.truncated.join(", ")}</span>
+                )}
+              </p>
+            )}
+          </div>
+        </>
+      )}
+    </aside>
   );
 }

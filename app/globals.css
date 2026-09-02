@@ -466,6 +466,32 @@
     border-left: var(--lk-bw) solid var(--border);
   }
 
+  /* The rail is always reserved, so it reads as chrome rather than as a panel
+     that happens to be narrow — card ground, not page ground. */
+  .lk-chat-rail {
+    background: var(--card);
+    border-left: var(--lk-bw) solid var(--border);
+  }
+  .lk-chat-rail-label {
+    writing-mode: vertical-rl;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    user-select: none;
+  }
+  .dark .lk-chat-rail-label { color: var(--lk-comment); }
+
+  .lk-chat-dot {
+    position: absolute;
+    top: 2px; right: 2px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .lk-chat-dot.streaming { animation: lk-chat-pulse 1.2s ease-in-out infinite; }
+  @keyframes lk-chat-pulse { 50% { opacity: 0.25; } }
+
   .lk-chat-bubble {
     border: var(--lk-bw) solid var(--border);
     border-radius: var(--radius);

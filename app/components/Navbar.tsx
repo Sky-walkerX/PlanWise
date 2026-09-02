@@ -68,7 +68,9 @@ export default function Navbar() {
             type="button"
             onClick={openChat}
             title="Ask your model (⌘J)"
-            className="lk-mono flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-[11px] uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+            // The rail carries this wherever it fits; below `sm` there is no
+            // rail, so the navbar keeps the only way in.
+            className="lk-mono flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-[11px] uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground sm:hidden"
           >
             <MessageSquare size={13} />
             <span className="hidden md:inline">⌘J</span>

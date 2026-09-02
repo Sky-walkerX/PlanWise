@@ -24,10 +24,14 @@ export function ContextPicker({
     onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]);
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <span className="lk-mono text-[10.5px] uppercase tracking-wide text-muted-foreground">
+    <div>
+      {/* The label is a heading, not a chip: sharing the wrapping row with the
+          chips orphaned it and started the chips a label-width inside the
+          gutter the composer and the budget line sit on. */}
+      <div className="lk-mono mb-1.5 text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
         context
-      </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5">
       {active.map((subject) => {
         const on = selected.includes(subject.id);
         return (
@@ -36,7 +40,7 @@ export function ContextPicker({
             type="button"
             onClick={() => toggle(subject.id)}
             aria-pressed={on}
-            className={`lk-mono max-w-[140px] truncate rounded-md border px-2 py-1 text-[10.5px] uppercase tracking-wide transition-colors ${
+            className={`lk-mono max-w-[150px] truncate rounded-md border px-2 py-1 text-[10.5px] uppercase tracking-wide transition-colors ${
               on
                 ? "border-foreground bg-foreground text-background"
                 : "border-border text-muted-foreground hover:text-foreground"
@@ -55,6 +59,7 @@ export function ContextPicker({
           none
         </button>
       )}
+      </div>
     </div>
   );
 }
